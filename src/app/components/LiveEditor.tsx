@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
+import { editUrl } from '../data/repo';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import CodeMirror from '@uiw/react-codemirror';
 import { html as htmlLang } from '@codemirror/lang-html';
@@ -25,8 +26,6 @@ const EMAIL_META = {
 
 const NAVER_GREEN = '#03c75a';
 
-/** 템플릿 원본 파일의 GitHub 편집 화면 주소. 브랜치를 바꾸면 여기만 고친다. */
-const REPO_EDIT_BASE = 'https://github.com/namiruan/coldmail-preview/edit/main';
 
 const VOID_ELEMENTS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
@@ -854,7 +853,7 @@ export function LiveEditor() {
   const handleCommit = useCallback(async () => {
     const t = DEFAULT_TEMPLATES.find(t => t.id === activeId);
     if (!t) return;
-    const url = `${REPO_EDIT_BASE}/${t.path}`;
+    const url = editUrl(t.path);
     try {
       await navigator.clipboard.writeText(code);
       toast.success('코드를 복사했습니다. GitHub 편집기에서 전체 선택 후 붙여넣고 커밋하세요.');

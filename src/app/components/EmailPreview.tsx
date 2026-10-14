@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Copy, Check, Mail,
   ChevronDown, ChevronLeft, ChevronUp, ChevronRight, Star,
-  MoreHorizontal, Code, X, Sun, Moon, AlertTriangle, Code2,
+  MoreHorizontal, Code, X, Sun, Moon, AlertTriangle, Code2, FileCode2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
+import { blobUrl } from '../data/repo';
 
 type DeviceMode = 'desktop' | 'mobile';
 
@@ -355,23 +356,52 @@ export function EmailPreview() {
             {templates.map((t) => {
               const isActive = t.id === activeId;
               return (
-                <button
+                <div
                   key={t.id}
-                  onClick={() => setActiveId(t.id)}
-                  className="w-full text-left px-4 py-2.5 transition-colors"
+                  className="group relative w-full transition-colors"
                   style={{
                     borderLeft: isActive ? `2px solid ${sideActiveBorder}` : '2px solid transparent',
-                    color: isActive
-                      ? isDark ? '#93c5fd' : '#1d4ed8'
-                      : isDark ? '#888' : '#374151',
                     background: isActive ? sideActive : 'transparent',
-                    fontWeight: isActive ? 600 : 400,
+                    // 아이콘 뒤를 덮어 긴 이름과 겹쳐 보이지 않게 한다
+                    ['--row-bg' as string]: isActive ? sideActive : sideBg,
+                  } as React.CSSProperties}
+                  onMouseEnter={e => {
+                    if (isActive) return;
+                    e.currentTarget.style.background = sideHover;
+                    e.currentTarget.style.setProperty('--row-bg', sideHover);
                   }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = sideHover; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  onMouseLeave={e => {
+                    if (isActive) return;
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.setProperty('--row-bg', sideBg);
+                  }}
                 >
-                  <span className="text-xs">{t.name}</span>
-                </button>
+                  <button
+                    onClick={() => setActiveId(t.id)}
+                    className="w-full text-left px-4 py-2.5"
+                    style={{
+                      color: isActive
+                        ? isDark ? '#93c5fd' : '#1d4ed8'
+                        : isDark ? '#888' : '#374151',
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  >
+                    <span className="text-xs">{t.name}</span>
+                  </button>
+                  {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다.
+                      선택된 항목은 항상, 나머지는 hover·focus 때 나타난다. */}
+                  <a
+                    href={blobUrl(t.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`GitHub에서 원본 열기 — ${t.path}`}
+                    aria-label={`${t.name} 원본 소스를 GitHub에서 열기`}
+                    className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+                    style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
+                  >
+                    <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
+                  </a>
+                </div>
               );
             })}
           </div>
