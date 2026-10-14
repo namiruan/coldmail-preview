@@ -566,7 +566,7 @@ export function EmailPreview() {
                           </span>
                           {STATUS_UI[t.status] && (
                             <span
-                              className="ml-1.5 px-1 py-px rounded text-[9px] align-middle"
+                              className="ml-1.5 px-1 py-px rounded text-[9px] align-middle whitespace-nowrap"
                               style={{
                                 background: STATUS_UI[t.status]!.tone(isDark).bg,
                                 color: STATUS_UI[t.status]!.tone(isDark).fg,
