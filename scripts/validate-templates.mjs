@@ -75,5 +75,7 @@ if (errors.length) {
   console.error('\n  templates/README.md 를 고치고 다시 커밋하세요.');
   process.exit(1);
 }
-const n = s => templates.filter(t => t.status === s).length;
-console.log(`✓ 시안 문서 정상 — ${templates.length}개 (${STATUS_TO_KO.active} ${n('active')} · ${STATUS_TO_KO.paused} ${n('paused')})`);
+const counts = Object.entries(STATUS_TO_KO)
+  .map(([k, ko]) => `${ko} ${templates.filter(t => t.status === k).length}`)
+  .join(' · ');
+console.log(`✓ 시안 문서 정상 — ${templates.length}개 (${counts})`);

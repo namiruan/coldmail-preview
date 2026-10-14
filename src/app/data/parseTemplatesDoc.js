@@ -1,8 +1,10 @@
 // templates/README.md 의 표를 읽는다.
 // 앱(Vite)과 검증 스크립트(Node)가 같은 파서를 쓰도록 평범한 JS로 둔다.
 
-const STATUS_FROM_KO = { '사용중': 'active', '중단': 'paused' };
-export const STATUS_TO_KO = { active: '사용중', paused: '중단' };
+// draft = 시안은 있으나 아직 쓰기 전. paused = 쓰다가 그만둔 것.
+const STATUS_FROM_KO = { '사용중': 'active', '미사용': 'draft', '중단': 'paused' };
+export const STATUS_TO_KO = { active: '사용중', draft: '미사용', paused: '중단' };
+export const STATUS_KO = Object.keys(STATUS_FROM_KO);
 
 /** 표의 한 줄을 셀 배열로. 앞뒤 | 와 공백을 턴다. */
 function cells(line) {
@@ -60,7 +62,7 @@ export function parseTemplatesDoc(md) {
     const statusKo = clean(r['상태']);
     const status = STATUS_FROM_KO[statusKo];
     if (statusKo && !status) {
-      errors.push(`${id}: 상태 "${statusKo}" — "사용중" 또는 "중단" 만 됩니다`);
+      errors.push(`${id}: 상태 "${statusKo}" — ${STATUS_KO.map(k => `"${k}"`).join(" / ")} 중 하나여야 합니다`);
     }
     const utm = {};
     for (const key of ['source', 'medium', 'campaign', 'content']) {

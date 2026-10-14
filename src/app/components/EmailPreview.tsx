@@ -21,6 +21,28 @@ const EMAIL_META = {
   date: '2026년 3월 30일 (월) 오전 10:24',
 };
 
+/**
+ * 상태별 표시 규칙. 중단은 끝난 것이라 목록에서 숨기지만,
+ * 미사용은 띄우기 전에 검토할 대상이라 그대로 보여준다.
+ */
+const STATUS_UI = {
+  active: null,
+  draft: {
+    label: '미사용',
+    hidden: false,
+    dim: 0.75,
+    tone: (d: boolean) => ({ bg: d ? '#2a3340' : '#eff6ff', fg: d ? '#93c5fd' : '#1d4ed8', border: d ? '#3a4a5e' : '#bfdbfe' }),
+    notice: '내용을 확인한 뒤 문서에서 상태를 "사용중"으로 바꾸세요.',
+  },
+  paused: {
+    label: '중단',
+    hidden: true,
+    dim: 0.45,
+    tone: (d: boolean) => ({ bg: d ? '#3a2a2a' : '#fef2f2', fg: d ? '#fca5a5' : '#b91c1c', border: d ? '#5a3a3a' : '#fecaca' }),
+    notice: '설정은 그대로 남아 있지만 지금은 쓰지 않는 시안이니 발송 전에 확인하세요.',
+  },
+} as const;
+
 function getSubject(html: string): string {
   const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   return match ? match[1].trim() : '콜드메일 시안';
@@ -211,13 +233,16 @@ export function EmailPreview() {
     try { localStorage.setItem('coldmail:showPaused', showPaused ? '1' : '0'); } catch { /* 저장 못 해도 동작에는 지장 없다 */ }
   }, [showPaused]);
 
-  const pausedCount = useMemo(() => templates.filter(t => t.status === 'paused').length, [templates]);
+  const pausedCount = useMemo(
+    () => templates.filter(t => STATUS_UI[t.status]?.hidden).length,
+    [templates],
+  );
 
   // manifest 순서를 유지하며 group으로 묶는다.
   const groups = useMemo(() => {
     const out: { name: string; items: typeof templates }[] = [];
     const visible = templates.filter(
-      t => showPaused || t.status === 'active' || t.id === activeId,
+      t => showPaused || !STATUS_UI[t.status]?.hidden || t.id === activeId,
     );
     for (const t of visible) {
       const last = out[out.length - 1];
@@ -500,18 +525,18 @@ export function EmailPreview() {
                             fontWeight: isActive ? 600 : 400,
                           }}
                         >
-                          <span className="text-xs" style={{ opacity: t.status === 'paused' ? 0.45 : 1 }}>
+                          <span className="text-xs" style={{ opacity: STATUS_UI[t.status]?.dim ?? 1 }}>
                             {t.label}
                           </span>
-                          {t.status === 'paused' && (
+                          {STATUS_UI[t.status] && (
                             <span
                               className="ml-1.5 px-1 py-px rounded text-[9px] align-middle"
                               style={{
-                                background: isDark ? '#3a2a2a' : '#fee2e2',
-                                color: isDark ? '#fca5a5' : '#b91c1c',
+                                background: STATUS_UI[t.status]!.tone(isDark).bg,
+                                color: STATUS_UI[t.status]!.tone(isDark).fg,
                               }}
                             >
-                              중단
+                              {STATUS_UI[t.status]!.label}
                             </span>
                           )}
                         </button>
@@ -615,20 +640,20 @@ export function EmailPreview() {
           className="flex-1 overflow-auto flex flex-col items-center py-8 px-6"
           style={{ background: isDark ? '#07070a' : '#f1f3f4' }}
         >
-          {current.status === 'paused' && (
+          {STATUS_UI[current.status] && (
             <div
               className="w-full max-w-[900px] mb-4 px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm"
               style={{
-                background: isDark ? '#3a2a2a' : '#fef2f2',
-                color: isDark ? '#fca5a5' : '#b91c1c',
-                border: `1px solid ${isDark ? '#5a3a3a' : '#fecaca'}`,
+                background: STATUS_UI[current.status]!.tone(isDark).bg,
+                color: STATUS_UI[current.status]!.tone(isDark).fg,
+                border: `1px solid ${STATUS_UI[current.status]!.tone(isDark).border}`,
               }}
               role="status"
             >
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>
-                <strong>중단된 시안</strong>입니다. 설정은 그대로 남아 있지만 지금은 쓰지 않는 시안이니
-                발송 전에 확인하세요.
+                <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
+                {STATUS_UI[current.status]!.notice}
               </span>
             </div>
           )}
