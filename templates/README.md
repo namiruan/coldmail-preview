@@ -9,7 +9,6 @@
 |------|------|------|------|------|------|------|------|------|------|
 | 01 | 콜드메일 | 안면인식서비스 | 단일홍보 A안 | 01-face-promo-a.html | 사용중 | kbz_mail | email | face_2026 | mail-a |
 | 02 | 콜드메일 | 안면인식서비스 | 단일홍보 B안 | 02-face-promo-b.html | 사용중 | kbz_mail | email | face_2026 | mail-b |
-| 03 | 콜드메일 | 안면인식서비스 | 추가 | 03-face-addon.html | 운영종료 | - | - | - | - |
 | 08 | 콜드메일 | 퇴직공제 | 26.04.02~26.04.06 | 08-premium-title-ab.html | 운영종료 | coldmail | email | title_ab | - |
 | 04 | 콜드메일 | 퇴직공제 | 26.04.07~26.06.18 | 04-severance-agency.html | 운영종료 | coldmail | email | - | - |
 | 09 | 콜드메일 | 퇴직공제 | 26.06.23~ | 09-face-section-ab.html | 사용중 | coldmail | email | - | - |
