@@ -48,6 +48,9 @@ function figmaAssetResolver() {
 }
 
 export default defineConfig({
+  // GitHub Pages는 /<repo>/ 하위 경로로 서빙된다. CI에서 VITE_BASE를 넘기고,
+  // 로컬 dev·preview는 루트('/')를 그대로 쓴다.
+  base: process.env.VITE_BASE ?? '/',
   plugins: [
     figmaAssetResolver(),
     react(),
