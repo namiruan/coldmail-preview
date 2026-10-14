@@ -44,9 +44,6 @@ for (const t of templates) {
     usedFiles.add(t.file);
     if (!htmlFiles.includes(t.file)) fail(where, `templates/${t.file} 파일이 없습니다`);
   }
-  if (t.period && !/^\d{4}-\d{2}-\d{2} ~ \d{4}-\d{2}-\d{2}$/.test(t.period)) {
-    fail(where, `기간 "${t.period}" — "2026-04-07 ~ 2026-06-18" 형식으로 적습니다`);
-  }
   if (t.subjects) {
     const keys = new Set();
     t.subjects.forEach((v, j) => {

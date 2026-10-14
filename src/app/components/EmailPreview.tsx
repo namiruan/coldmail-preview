@@ -734,8 +734,7 @@ export function EmailPreview() {
             >
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>
-                <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다
-                {current.period ? ` (집행 ${current.period})` : ''}.{' '}
+                <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
                 {STATUS_UI[current.status]!.notice}
               </span>
             </div>
