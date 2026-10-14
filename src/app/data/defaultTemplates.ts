@@ -29,6 +29,8 @@ export interface EmailTemplate {
    *   active = 쓰는 중 · draft = 시안은 있으나 아직 쓰기 전 · ended = 집행을 마침
    */
   status: TemplateStatus;
+  /** 집행 기간. 예: "2026-04-07 ~ 2026-06-18" */
+  period?: string;
 }
 
 export type TemplateStatus = 'active' | 'draft' | 'ended';
@@ -74,7 +76,7 @@ if (parsed.errors.length) {
 
 interface RawTemplate {
   id: string; name: string; category: string; group: string; label: string; file: string;
-  status: TemplateStatus; utm?: Utm; subjects?: SubjectVariant[];
+  status: TemplateStatus; period?: string; utm?: Utm; subjects?: SubjectVariant[];
 }
 
 export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
@@ -87,6 +89,7 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
   group: t.group,
   label: t.label,
   status: t.status,
+  period: t.period,
   utm: t.utm,
   subjects: t.subjects,
 }));
