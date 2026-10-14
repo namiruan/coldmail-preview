@@ -22,7 +22,7 @@ const EMAIL_META = {
 };
 
 /**
- * 상태별 표시 규칙. 중단은 끝난 것이라 목록에서 숨기지만,
+ * 상태별 표시 규칙. 운영종료는 끝난 것이라 목록에서 숨기지만,
  * 미사용은 띄우기 전에 검토할 대상이라 그대로 보여준다.
  */
 const STATUS_UI = {
@@ -34,12 +34,12 @@ const STATUS_UI = {
     tone: (d: boolean) => ({ bg: d ? '#2a3340' : '#eff6ff', fg: d ? '#93c5fd' : '#1d4ed8', border: d ? '#3a4a5e' : '#bfdbfe' }),
     notice: '내용을 확인한 뒤 문서에서 상태를 "사용중"으로 바꾸세요.',
   },
-  paused: {
-    label: '중단',
+  ended: {
+    label: '운영종료',
     hidden: true,
     dim: 0.45,
     tone: (d: boolean) => ({ bg: d ? '#3a2a2a' : '#fef2f2', fg: d ? '#fca5a5' : '#b91c1c', border: d ? '#5a3a3a' : '#fecaca' }),
-    notice: '설정은 그대로 남아 있지만 지금은 쓰지 않는 시안이니 발송 전에 확인하세요.',
+    notice: '설정은 그대로 남아 있지만 집행이 끝난 시안이니 발송 전에 확인하세요.',
   },
 } as const;
 
@@ -440,7 +440,7 @@ export function EmailPreview() {
               <button
                 onClick={() => setShowPaused(v => !v)}
                 aria-pressed={showPaused}
-                title={showPaused ? '중단된 시안 숨기기' : `중단된 시안 ${pausedCount}개 보기`}
+                title={showPaused ? '운영종료 시안 숨기기' : `운영종료 시안 ${pausedCount}개 보기`}
                 className="ml-auto px-1.5 py-0.5 rounded text-[10px] transition-colors"
                 style={{
                   background: showPaused ? (isDark ? '#3a2a2a' : '#fee2e2') : 'transparent',
@@ -450,7 +450,7 @@ export function EmailPreview() {
                   border: `1px solid ${showPaused ? 'transparent' : (isDark ? '#2a2a2e' : '#e5e7eb')}`,
                 }}
               >
-                중단 {pausedCount}
+                운영종료 {pausedCount}
               </button>
             )}
           </div>

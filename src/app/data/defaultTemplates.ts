@@ -21,12 +21,12 @@ export interface EmailTemplate {
   subjects?: SubjectVariant[];
   /**
    * 사용 상태. 어느 값이든 utm·subjects 설정은 그대로 남는다.
-   *   active = 쓰는 중 · draft = 시안은 있으나 아직 쓰기 전 · paused = 쓰다가 그만둠
+   *   active = 쓰는 중 · draft = 시안은 있으나 아직 쓰기 전 · ended = 집행을 마침
    */
   status: TemplateStatus;
 }
 
-export type TemplateStatus = 'active' | 'draft' | 'paused';
+export type TemplateStatus = 'active' | 'draft' | 'ended';
 
 export interface SubjectVariant {
   /** 변형 식별자. utm_term 기본값으로도 쓰인다. */

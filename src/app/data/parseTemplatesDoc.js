@@ -1,9 +1,9 @@
 // templates/README.md 의 표를 읽는다.
 // 앱(Vite)과 검증 스크립트(Node)가 같은 파서를 쓰도록 평범한 JS로 둔다.
 
-// draft = 시안은 있으나 아직 쓰기 전. paused = 쓰다가 그만둔 것.
-const STATUS_FROM_KO = { '사용중': 'active', '미사용': 'draft', '중단': 'paused' };
-export const STATUS_TO_KO = { active: '사용중', draft: '미사용', paused: '중단' };
+// draft = 시안은 있으나 아직 쓰기 전. ended = 집행을 마친 것.
+const STATUS_FROM_KO = { '사용중': 'active', '미사용': 'draft', '운영종료': 'ended' };
+export const STATUS_TO_KO = { active: '사용중', draft: '미사용', ended: '운영종료' };
 export const STATUS_KO = Object.keys(STATUS_FROM_KO);
 
 /** 표의 한 줄을 셀 배열로. 앞뒤 | 와 공백을 턴다. */
