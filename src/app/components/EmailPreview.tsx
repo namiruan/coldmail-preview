@@ -238,16 +238,26 @@ export function EmailPreview() {
     [templates],
   );
 
-  // manifest 순서를 유지하며 group으로 묶는다.
+  /**
+   * 같은 이름이면 표에서 떨어져 있어도 한 묶음으로 본다.
+   * 붙어 있는 줄만 묶으면 ID 순서상 사이에 다른 그룹이 끼었을 때
+   * 같은 이름의 그룹이 둘로 갈린다.
+   * 그룹의 자리는 처음 나온 위치, 그룹 안 순서는 표의 순서를 따른다.
+   */
   const groups = useMemo(() => {
     const out: { name: string; items: typeof templates }[] = [];
+    const byName = new Map<string, (typeof out)[number]>();
     const visible = templates.filter(
       t => showPaused || !STATUS_UI[t.status]?.hidden || t.id === activeId,
     );
     for (const t of visible) {
-      const last = out[out.length - 1];
-      if (last && last.name === t.group) last.items.push(t);
-      else out.push({ name: t.group, items: [t] });
+      let g = byName.get(t.group);
+      if (!g) {
+        g = { name: t.group, items: [] };
+        byName.set(t.group, g);
+        out.push(g);
+      }
+      g.items.push(t);
     }
     return out;
   }, [templates, showPaused, activeId]);
