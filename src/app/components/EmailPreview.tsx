@@ -8,6 +8,8 @@ import {
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
 import { blobUrl } from '../data/repo';
+import { subjectTerm } from '../data/defaultTemplates';
+import { applyUtm } from '../data/utm';
 
 type DeviceMode = 'desktop' | 'mobile';
 
@@ -213,6 +215,7 @@ export function EmailPreview() {
     return out;
   }, [templates]);
 
+  const [subjectKey, setSubjectKey] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const toggleGroup = useCallback((name: string) => {
     setCollapsed(prev => {
@@ -224,7 +227,26 @@ export function EmailPreview() {
 
   const current = templates.find(t => t.id === activeId) ?? templates[0];
   const currentIndex = templates.findIndex(t => t.id === activeId);
-  const subject = getSubject(current.html);
+  // 제목은 manifest가 원본이다. subjects가 없으면 예전처럼 <title>에서 읽는다.
+  const variants = current.subjects ?? [];
+  const variant = variants.find(v => v.key === subjectKey) ?? variants[0];
+  const subject = variant?.text ?? getSubject(current.html);
+
+  // 내보내는 HTML: 선택한 변형의 제목과 UTM을 반영한다.
+  const exportHtml = useMemo(() => {
+    let html = current.html;
+    if (variant) {
+      const title = variant.text.replace(/[<>]/g, '');
+      html = /<title[^>]*>[^<]*<\/title>/i.test(html)
+        ? html.replace(/<title([^>]*)>[^<]*<\/title>/i, `<title$1>${title}</title>`)
+        : html;
+    }
+    return applyUtm(html, current.utm && variant
+      ? { ...current.utm, term: variants.length > 1 ? subjectTerm(variant) : current.utm.term }
+      : current.utm);
+  }, [current, variant, variants.length]);
+  useEffect(() => { setSubjectKey(null); }, [activeId]);
+
   useEffect(() => {
     const g = templates.find(t => t.id === activeId)?.group;
     if (g) setCollapsed(prev => (prev.has(g) ? new Set([...prev].filter(x => x !== g)) : prev));
@@ -311,6 +333,38 @@ export function EmailPreview() {
               <Moon className="w-4 h-4" /><span>다크</span>
             </button>
           </div>
+
+          {/* 제목 변형 전환 — 변형이 2개 이상일 때만 */}
+          {variants.length > 1 && (
+            <div
+              className="flex items-center gap-1 p-1 rounded-lg"
+              style={{ background: isDark ? '#2a2a2e' : '#f3f4f6' }}
+              role="group"
+              aria-label="메일 제목 변형"
+            >
+              <span className="px-1.5 text-[11px] font-medium" style={{ color: isDark ? '#777' : '#9ca3af' }}>
+                제목
+              </span>
+              {variants.map(v => {
+                const on = v.key === variant?.key;
+                return (
+                  <button
+                    key={v.key}
+                    onClick={() => setSubjectKey(v.key)}
+                    title={v.text}
+                    aria-pressed={on}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                      on
+                        ? isDark ? 'bg-[#3a3a3e] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm'
+                        : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {v.key.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Code button */}
           <button
@@ -502,7 +556,7 @@ export function EmailPreview() {
 
       {/* Code Modal */}
       {codeModalOpen && (
-        <CodeModal templateName={current.name} fullHtml={lightHtml} onClose={() => setCodeModalOpen(false)} />
+        <CodeModal templateName={current.name} fullHtml={buildLightHtml(exportHtml, current.css)} onClose={() => setCodeModalOpen(false)} />
       )}
 
       {/* Dark Mode Banner – fixed bottom */}

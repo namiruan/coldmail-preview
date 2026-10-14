@@ -4,14 +4,38 @@
     "name": "안면인식서비스 단일홍보 A안",
     "group": "안면인식서비스",
     "label": "단일홍보 A안",
-    "file": "01-face-promo-a.html"
+    "file": "01-face-promo-a.html",
+    "utm": {
+      "source": "kbz_mail",
+      "medium": "email",
+      "campaign": "face_2026",
+      "content": "mail-a"
+    },
+    "subjects": [
+      {
+        "key": "a",
+        "text": "#{단말기_업무담당자}님, 김반장은 얼굴 인증 하나로 급여 정산까지 되는 것 알고 계셨나요?"
+      }
+    ]
   },
   {
     "id": "02",
     "name": "안면인식서비스 단일홍보 B안",
     "group": "안면인식서비스",
     "label": "단일홍보 B안",
-    "file": "02-face-promo-b.html"
+    "file": "02-face-promo-b.html",
+    "utm": {
+      "source": "kbz_mail",
+      "medium": "email",
+      "campaign": "face_2026",
+      "content": "mail-b"
+    },
+    "subjects": [
+      {
+        "key": "a",
+        "text": "담당자님, 대리출근·오기재… 안면인식기 없이 잡을 수 있으세요?"
+      }
+    ]
   },
   {
     "id": "03",
@@ -32,20 +56,42 @@
     "name": "가이드북 메일 전송 템플릿",
     "group": "가이드북",
     "label": "메일 전송 템플릿",
-    "file": "05-guidebook.html"
+    "file": "05-guidebook.html",
+    "utm": {
+      "source": "guidebook",
+      "medium": "email"
+    },
+    "subjects": [
+      {
+        "key": "a",
+        "text": "[김반장]{작성자이름}님,📘 요청하신 업무북이 도착했습니다!"
+      }
+    ]
   },
   {
     "id": "06",
     "name": "김반장 견적서 템플릿",
     "group": "김반장 견적서",
     "label": "견적서",
-    "file": "06-quote.html"
+    "file": "06-quote.html",
+    "subjects": [
+      {
+        "key": "a",
+        "text": "[김반장] #{담당자}님, 요청하신 #{상품명}견적서를 보내드립니다"
+      }
+    ]
   },
   {
     "id": "07",
     "name": "김반장 예상 견적서 템플릿",
     "group": "김반장 견적서",
     "label": "예상 견적서",
-    "file": "07-quote-estimate.html"
+    "file": "07-quote-estimate.html",
+    "subjects": [
+      {
+        "key": "a",
+        "text": "[김반장] #{담당자}님, 요청하신 #{상품명}예상견적서를 보내드립니다"
+      }
+    ]
   }
 ]

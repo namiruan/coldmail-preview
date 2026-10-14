@@ -57,7 +57,39 @@ src/
   styles/                      Tailwind v4 + 테마 토큰
 ```
 
-템플릿을 추가하거나 고치려면 `src/app/data/defaultTemplates.ts` 를 편집하고 커밋합니다.
+템플릿을 추가하거나 고치려면 `templates/` 의 `.html` 파일을 편집하고 커밋합니다.
+목록 순서·묶음·제목·UTM은 모두 `templates/manifest.json` 이 결정합니다.
+
+## 제목 A/B 테스트와 UTM
+
+**UTM의 원본은 `manifest.json` 입니다.** 코드 보기로 내보낼 때 HTML 안의
+`utm_*` 를 manifest 값으로 맞춥니다. 이미 `utm_` 을 하나라도 달고 있는 링크만
+대상이라, 로고·푸터처럼 추적하지 않는 링크는 건드리지 않습니다.
+
+본문이 같고 **제목만 다른 A/B** 는 파일을 복제하지 말고 `subjects` 에 변형을
+추가합니다. 2개 이상이면 미리보기 상단에 `제목 A B` 전환이 나타나고, 고른
+변형에 맞춰 `<title>` 과 `utm_term` 이 반영된 HTML이 나옵니다.
+
+```json
+{
+  "id": "01",
+  "group": "안면인식서비스", "label": "단일홍보 A안",
+  "file": "01-face-promo-a.html",
+  "utm": { "source": "kbz_mail", "medium": "email",
+           "campaign": "face_2026", "content": "mail-a" },
+  "subjects": [
+    { "key": "a", "text": "첫 번째 제목" },
+    { "key": "b", "text": "두 번째 제목" }
+  ]
+}
+```
+
+두 축은 독립적입니다 — **본문 변형은 `utm_content`**, **제목 변형은 `utm_term`**
+(`subj-{key}`, `term` 으로 직접 지정 가능). 그래서 어느 쪽이 성과를 냈는지 따로
+볼 수 있습니다.
+
+`utm` 이 없는 템플릿은 HTML을 그대로 내보냅니다. `subjects` 가 없으면 제목을
+HTML의 `<title>` 에서 읽습니다.
 
 ## 이 저장소와 Figma Make
 

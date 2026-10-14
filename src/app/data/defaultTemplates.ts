@@ -1,4 +1,5 @@
 import manifest from '../../../templates/manifest.json';
+import type { Utm } from './utm';
 
 export interface EmailTemplate {
   id: string;
@@ -12,6 +13,19 @@ export interface EmailTemplate {
   group: string;
   /** 묶음 안에서의 이름. 예: "단일홍보 A안" */
   label: string;
+  /** manifest가 원본이다. 내보낼 때 HTML의 utm_* 를 이 값으로 맞춘다. 없으면 HTML을 그대로 둔다. */
+  utm?: Utm;
+  /** 제목 변형. 2개 이상이면 미리보기에 전환 UI가 뜬다. 없으면 HTML의 <title>을 쓴다. */
+  subjects?: SubjectVariant[];
+}
+
+export interface SubjectVariant {
+  /** 변형 식별자. utm_term 기본값으로도 쓰인다. */
+  key: string;
+  /** 메일 제목 */
+  text: string;
+  /** utm_term 을 따로 지정할 때. 생략하면 `subj-{key}` */
+  term?: string;
 }
 
 /**
@@ -44,4 +58,9 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = manifest.map(t => ({
   path: `templates/${t.file}`,
   group: t.group,
   label: t.label,
+  utm: 'utm' in t ? (t.utm as Utm) : undefined,
+  subjects: 'subjects' in t ? (t.subjects as SubjectVariant[]) : undefined,
 }));
+
+/** 변형의 utm_term 값. 따로 적지 않았으면 key에서 만든다. */
+export const subjectTerm = (v: SubjectVariant) => v.term ?? `subj-${v.key}`;
