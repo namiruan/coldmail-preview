@@ -11,6 +11,11 @@ export interface EmailTemplate {
   css: string;
   /** 저장소 기준 경로. "GitHub에서 열기"가 이 파일의 편집 화면을 연다. */
   path: string;
+  /**
+   * 대분류. 콜드메일은 먼저 보내는 영업 메일이라 제목 A/B 대상이고,
+   * 발신템플릿은 요청에 응답해 보내는 메일이라 테스트하지 않는다.
+   */
+  category: string;
   /** 시안 목록에서 묶이는 단위. 같은 group끼리 한 묶음으로 보인다. */
   group: string;
   /** 묶음 안에서의 이름. 예: "단일홍보 A안" */
@@ -68,7 +73,7 @@ if (parsed.errors.length) {
 }
 
 interface RawTemplate {
-  id: string; name: string; group: string; label: string; file: string;
+  id: string; name: string; category: string; group: string; label: string; file: string;
   status: TemplateStatus; utm?: Utm; subjects?: SubjectVariant[];
 }
 
@@ -78,6 +83,7 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
   html: read(t.file),
   css: '',
   path: `templates/${t.file}`,
+  category: t.category,
   group: t.group,
   label: t.label,
   status: t.status,

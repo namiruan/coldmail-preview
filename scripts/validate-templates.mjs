@@ -33,7 +33,7 @@ const usedFiles = new Set();
 
 for (const t of templates) {
   const where = `${t.id || '(ID 없음)'} ${t.name}`.trim();
-  for (const [key, ko] of [['id', 'ID'], ['group', '그룹'], ['label', '이름'], ['file', '파일']]) {
+  for (const [key, ko] of [['id', 'ID'], ['category', '분류'], ['group', '그룹'], ['label', '이름'], ['file', '파일']]) {
     if (!t[key]) fail(where, `"${ko}" 칸이 비어 있습니다`);
   }
   if (t.id) {
@@ -78,4 +78,7 @@ if (errors.length) {
 const counts = Object.entries(STATUS_TO_KO)
   .map(([k, ko]) => `${ko} ${templates.filter(t => t.status === k).length}`)
   .join(' · ');
+const cats = [...new Set(templates.map(t => t.category))];
 console.log(`✓ 시안 문서 정상 — ${templates.length}개 (${counts})`);
+// 오타로 분류가 하나 더 생기면 여기서 눈에 띈다.
+console.log(`  분류: ${cats.map(c => `${c} ${templates.filter(t => t.category === c).length}`).join(' · ')}`);

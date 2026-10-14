@@ -5,17 +5,19 @@
 
 ## 시안
 
-| ID | 그룹 | 이름 | 파일 | 상태 | source | medium | campaign | content |
-|----|------|------|------|------|--------|--------|----------|---------|
-| 01 | 안면인식서비스 | 단일홍보 A안 | 01-face-promo-a.html | 사용중 | kbz_mail | email | face_2026 | mail-a |
-| 02 | 안면인식서비스 | 단일홍보 B안 | 02-face-promo-b.html | 사용중 | kbz_mail | email | face_2026 | mail-b |
-| 03 | 안면인식서비스 | 추가 | 03-face-addon.html | 운영종료 | - | - | - | - |
-| 04 | 퇴직공제 | 업무대행 홍보메일 | 04-severance-agency.html | 운영종료 | - | - | - | - |
-| 05 | 홈페이지 가이드북 | 메일 전송 템플릿 | 05-guidebook.html | 사용중 | guidebook | email | - | - |
-| 06 | 김반장 견적서 | 인트라넷 최종 계약서 | 06-quote.html | 사용중 | - | - | - | - |
-| 07 | 김반장 견적서 | 홈페이지용 예상 견적서 | 07-quote-estimate.html | 사용중 | - | - | - | - |
-| 08 | 퇴직공제 | 프리미엄 제목 A/B | 08-premium-title-ab.html | 운영종료 | coldmail | email | title_ab | - |
+| ID | 분류 | 그룹 | 이름 | 파일 | 상태 | source | medium | campaign | content |
+|----|------|------|------|------|------|--------|--------|----------|---------|
+| 01 | 콜드메일 | 안면인식서비스 | 단일홍보 A안 | 01-face-promo-a.html | 사용중 | kbz_mail | email | face_2026 | mail-a |
+| 02 | 콜드메일 | 안면인식서비스 | 단일홍보 B안 | 02-face-promo-b.html | 사용중 | kbz_mail | email | face_2026 | mail-b |
+| 03 | 콜드메일 | 안면인식서비스 | 추가 | 03-face-addon.html | 운영종료 | - | - | - | - |
+| 04 | 콜드메일 | 퇴직공제 | 업무대행 홍보메일 | 04-severance-agency.html | 운영종료 | - | - | - | - |
+| 05 | 발신템플릿 | 홈페이지 가이드북 | 메일 전송 템플릿 | 05-guidebook.html | 사용중 | guidebook | email | - | - |
+| 06 | 발신템플릿 | 김반장 견적서 | 인트라넷 최종 계약서 | 06-quote.html | 사용중 | - | - | - | - |
+| 07 | 발신템플릿 | 김반장 견적서 | 홈페이지용 예상 견적서 | 07-quote-estimate.html | 사용중 | - | - | - | - |
+| 08 | 콜드메일 | 퇴직공제 | 프리미엄 제목 A/B | 08-premium-title-ab.html | 운영종료 | coldmail | email | title_ab | - |
 
+- **분류** — `콜드메일` 은 먼저 보내는 영업 메일이라 제목 A/B 대상입니다.
+  `발신템플릿` 은 요청에 응답해 보내는 메일이라 테스트하지 않습니다.
 - **그룹** — 이름이 같으면 표에서 떨어져 있어도 한 묶음으로 보입니다.
   묶음의 자리는 그 이름이 처음 나온 줄, 묶음 안 순서는 표의 순서를 따릅니다.
 - **상태** — 어느 값이든 UTM·제목 설정은 그대로 남습니다.

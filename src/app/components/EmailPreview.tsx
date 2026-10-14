@@ -239,23 +239,33 @@ export function EmailPreview() {
   );
 
   /**
-   * 같은 이름이면 표에서 떨어져 있어도 한 묶음으로 본다.
-   * 붙어 있는 줄만 묶으면 ID 순서상 사이에 다른 그룹이 끼었을 때
-   * 같은 이름의 그룹이 둘로 갈린다.
-   * 그룹의 자리는 처음 나온 위치, 그룹 안 순서는 표의 순서를 따른다.
+   * 분류 → 그룹 → 시안 세 층으로 묶는다.
+   * 이름이 같으면 표에서 떨어져 있어도 한 묶음으로 본다. 붙어 있는 줄만
+   * 묶으면 ID 순서상 사이에 다른 것이 끼었을 때 같은 이름이 둘로 갈린다.
+   * 자리는 처음 나온 위치, 안쪽 순서는 표의 순서를 따른다.
    */
-  const groups = useMemo(() => {
-    const out: { name: string; items: typeof templates }[] = [];
-    const byName = new Map<string, (typeof out)[number]>();
+  const sections = useMemo(() => {
+    type Group = { name: string; items: typeof templates };
+    type Section = { name: string; groups: Group[] };
+    const out: Section[] = [];
+    const byCat = new Map<string, Section>();
+    const byGroup = new Map<string, Group>();
     const visible = templates.filter(
       t => showPaused || !STATUS_UI[t.status]?.hidden || t.id === activeId,
     );
     for (const t of visible) {
-      let g = byName.get(t.group);
+      let sec = byCat.get(t.category);
+      if (!sec) {
+        sec = { name: t.category, groups: [] };
+        byCat.set(t.category, sec);
+        out.push(sec);
+      }
+      const key = `${t.category}\u0000${t.group}`;
+      let g = byGroup.get(key);
       if (!g) {
         g = { name: t.group, items: [] };
-        byName.set(t.group, g);
-        out.push(g);
+        byGroup.set(key, g);
+        sec.groups.push(g);
       }
       g.items.push(t);
     }
@@ -488,7 +498,16 @@ export function EmailPreview() {
 
           {/* Template List — group별로 묶고, 그룹 제목을 눌러 접는다 */}
           <div className="flex-1 overflow-y-auto flex flex-col">
-            {groups.map((g) => {
+            {sections.map((sec) => (
+              <div key={sec.name}>
+                {/* 대분류 — 콜드메일 / 발신템플릿 */}
+                <div
+                  className="px-3 pt-3 pb-1 text-[10px] font-bold tracking-widest uppercase"
+                  style={{ color: isDark ? '#4b5563' : '#cbd5e1' }}
+                >
+                  {sec.name}
+                </div>
+                {sec.groups.map((g) => {
               const isCollapsed = collapsed.has(g.name);
               return (
                 <div key={g.name}>
@@ -616,7 +635,9 @@ export function EmailPreview() {
                   })}
                 </div>
               );
-            })}
+                })}
+              </div>
+            ))}
           </div>
 
           {/* 아래 화살표 */}

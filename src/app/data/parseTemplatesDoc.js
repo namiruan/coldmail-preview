@@ -77,6 +77,7 @@ export function parseTemplatesDoc(md) {
     }
     return {
       id,
+      category: clean(r['분류']),
       group: clean(r['그룹']),
       label: clean(r['이름']),
       name: `${clean(r['그룹'])} ${clean(r['이름'])}`.trim(),
