@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Copy, Check, Mail,
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
-import { blobUrl } from '../data/repo';
+import { blobUrl, MANIFEST_PATH } from '../data/repo';
 import { subjectTerm } from '../data/defaultTemplates';
 import { applyUtm } from '../data/utm';
 
@@ -334,38 +334,6 @@ export function EmailPreview() {
             </button>
           </div>
 
-          {/* 제목 변형 전환 — 변형이 2개 이상일 때만 */}
-          {variants.length > 1 && (
-            <div
-              className="flex items-center gap-1 p-1 rounded-lg"
-              style={{ background: isDark ? '#2a2a2e' : '#f3f4f6' }}
-              role="group"
-              aria-label="메일 제목 변형"
-            >
-              <span className="px-1.5 text-[11px] font-medium" style={{ color: isDark ? '#777' : '#9ca3af' }}>
-                제목
-              </span>
-              {variants.map(v => {
-                const on = v.key === variant?.key;
-                return (
-                  <button
-                    key={v.key}
-                    onClick={() => setSubjectKey(v.key)}
-                    title={v.text}
-                    aria-pressed={on}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      on
-                        ? isDark ? 'bg-[#3a3a3e] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm'
-                        : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {v.key.toUpperCase()}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {/* Code button */}
           <button
             onClick={() => setCodeModalOpen(true)}
@@ -456,8 +424,8 @@ export function EmailPreview() {
                   {!isCollapsed && g.items.map((t) => {
                     const isActive = t.id === activeId;
                     return (
+                      <Fragment key={t.id}>
                       <div
-                        key={t.id}
                         className="group relative w-full transition-colors"
                         style={{
                           borderLeft: isActive ? `2px solid ${sideActiveBorder}` : '2px solid transparent',
@@ -501,6 +469,48 @@ export function EmailPreview() {
                           <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
                         </a>
                       </div>
+
+                      {/* 제목 변형 — 선택된 시안에, 변형이 2개 이상일 때만 */}
+                      {isActive && (t.subjects?.length ?? 0) > 1 && (
+                        <div
+                          className="group/sub relative w-full flex items-center gap-1 pl-7 pr-8 py-1.5"
+                          style={{ background: isDark ? '#15202e' : '#f8fbff', ['--row-bg' as string]: isDark ? '#15202e' : '#f8fbff' } as React.CSSProperties}
+                        >
+                          <span className="text-[11px] shrink-0" style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>제목</span>
+                          {t.subjects!.map(v => {
+                            const on = v.key === variant?.key;
+                            return (
+                              <button
+                                key={v.key}
+                                onClick={() => setSubjectKey(v.key)}
+                                title={v.text}
+                                aria-pressed={on}
+                                className="px-2 py-0.5 rounded text-[11px] font-medium transition-all"
+                                style={{
+                                  background: on ? (isDark ? '#2d4a6b' : '#dbeafe') : 'transparent',
+                                  color: on
+                                    ? isDark ? '#bfdbfe' : '#1d4ed8'
+                                    : isDark ? '#6b7280' : '#9ca3af',
+                                }}
+                              >
+                                {v.key.toUpperCase()}
+                              </button>
+                            );
+                          })}
+                          <a
+                            href={blobUrl(MANIFEST_PATH)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`GitHub에서 제목 원본 열기 — ${MANIFEST_PATH}`}
+                            aria-label={`${t.name} 제목 변형을 GitHub에서 열기`}
+                            className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover/sub:opacity-100 focus:opacity-100 focus:outline-none"
+                            style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
+                          >
+                            <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
+                          </a>
+                        </div>
+                      )}
+                      </Fragment>
                     );
                   })}
                 </div>
