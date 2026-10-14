@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Monitor, Smartphone, Copy, Check, Code2,
+  Monitor, Smartphone, Copy, Check, Code2, GitBranch,
   ChevronDown, ChevronUp, ChevronLeft, MoreHorizontal,
   Sun, Moon, RotateCcw, GripVertical, Star,
 } from 'lucide-react';
@@ -24,6 +24,9 @@ const EMAIL_META = {
 };
 
 const NAVER_GREEN = '#03c75a';
+
+/** 템플릿 원본 파일의 GitHub 편집 화면 주소. 브랜치를 바꾸면 여기만 고친다. */
+const REPO_EDIT_BASE = 'https://github.com/namiruan/coldmail-preview/edit/main';
 
 const VOID_ELEMENTS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
@@ -846,6 +849,21 @@ export function LiveEditor() {
     }
   }, [code]);
 
+  // 편집본을 클립보드에 담고, 해당 템플릿의 원본 파일 편집 화면을 연다.
+  // GitHub이 로그인·권한을 처리한다 — 쓰기 권한이 없으면 fork 후 변경 제안으로 안내된다.
+  const handleCommit = useCallback(async () => {
+    const t = DEFAULT_TEMPLATES.find(t => t.id === activeId);
+    if (!t) return;
+    const url = `${REPO_EDIT_BASE}/${t.path}`;
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success('코드를 복사했습니다. GitHub 편집기에서 전체 선택 후 붙여넣고 커밋하세요.');
+    } catch {
+      toast.error('복사에 실패했습니다. 에디터에서 직접 복사해 주세요.');
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [activeId, code]);
+
   useEffect(() => {
     if (!showDropdown) return;
     const handler = () => setShowDropdown(false);
@@ -940,6 +958,14 @@ export function LiveEditor() {
             <Moon className="w-4 h-4" /><span>다크</span>
           </button>
         </div>
+
+        {/* GitHub에 반영 — 복사 + 원본 파일 편집 화면 열기 */}
+        <button onClick={handleCommit}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${btnBase}`}
+          title="코드를 복사하고 GitHub에서 이 템플릿의 원본 파일을 엽니다">
+          <GitBranch className="w-4 h-4" />
+          GitHub에서 커밋
+        </button>
 
         {/* Copy */}
         <button onClick={handleCopy}

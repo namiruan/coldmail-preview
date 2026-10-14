@@ -1,0 +1,37 @@
+[
+  {
+    "id": "01",
+    "name": "안면인식서비스 단일홍보 A안",
+    "file": "01-face-promo-a.html"
+  },
+  {
+    "id": "02",
+    "name": "안면인식서비스 단일홍보 B안",
+    "file": "02-face-promo-b.html"
+  },
+  {
+    "id": "03",
+    "name": "안면인식서비스 추가",
+    "file": "03-face-addon.html"
+  },
+  {
+    "id": "04",
+    "name": "퇴직공제 업무대행 홍보메일",
+    "file": "04-severance-agency.html"
+  },
+  {
+    "id": "05",
+    "name": "가이드북 메일 전송 템플릿",
+    "file": "05-guidebook.html"
+  },
+  {
+    "id": "06",
+    "name": "김반장 견적서 템플릿",
+    "file": "06-quote.html"
+  },
+  {
+    "id": "07",
+    "name": "김반장 예상 견적서 템플릿",
+    "file": "07-quote-estimate.html"
+  }
+]
