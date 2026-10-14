@@ -1,5 +1,7 @@
 # 콜드메일 라이브 테스트 (coldmail-preview)
 
+**▶ https://namiruan.github.io/coldmail-preview/**
+
 HTML 이메일 코드를 **메일 클라이언트에서 실제로 보이는 모습**으로 미리보는 도구입니다.
 Gmail 스타일 셸 안에 HTML을 렌더링해서, 보내기 전에 레이아웃이 깨지는지 확인합니다.
 
@@ -27,6 +29,16 @@ npm run dev      # http://localhost:5173
 | `npm run build` | `dist/` 로 프로덕션 빌드 |
 | `npm run preview` | 빌드 결과물을 로컬에서 서빙 |
 | `npm run typecheck` | `tsc --noEmit` 타입 검사 |
+
+## 배포
+
+`main`에 푸시하면 `.github/workflows/deploy.yml`이 typecheck → build → GitHub Pages 배포를 자동으로 수행합니다. 따로 할 일은 없습니다.
+
+Pages는 `https://<user>.github.io/<repo>/` 하위 경로로 서빙되므로 빌드 시 `VITE_BASE`를 넘깁니다. 라우터도 `import.meta.env.BASE_URL`에서 basename을 읽어 맞춥니다. 로컬 `npm run dev`는 루트(`/`) 기준이라 신경 쓸 필요가 없습니다.
+
+`createBrowserRouter`를 쓰기 때문에 `/editor`로 직접 들어가거나 새로고침하면 Pages가 404를 반환합니다. 워크플로가 `index.html`을 `404.html`로 복사해 두어, 그 안의 클라이언트 라우터가 경로를 처리합니다.
+
+> ⚠️ 이 저장소는 **public**입니다. `src/app/data/defaultTemplates.ts`의 템플릿 내용(가격 포함)은 빌드된 JS 번들에 그대로 들어가며, 배포된 사이트에서 누구나 읽을 수 있습니다.
 
 ## 구조
 
