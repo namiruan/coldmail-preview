@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate": "node scripts/validate-manifest.mjs"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
@@ -90,5 +91,5 @@
       "vite": "6.3.5"
     }
   },
-  "description": "HTML 이메일 코드를 메일 클라이언트에서 보이는 모습으로 미리보는 도구"
+  "description": "HTML \uc774\uba54\uc77c \ucf54\ub4dc\ub97c \uba54\uc77c \ud074\ub77c\uc774\uc5b8\ud2b8\uc5d0\uc11c \ubcf4\uc774\ub294 \ubaa8\uc2b5\uc73c\ub85c \ubbf8\ub9ac\ubcf4\ub294 \ub3c4\uad6c"
 }

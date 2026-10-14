@@ -29,6 +29,7 @@ npm run dev      # http://localhost:5173
 | `npm run build` | `dist/` 로 프로덕션 빌드 |
 | `npm run preview` | 빌드 결과물을 로컬에서 서빙 |
 | `npm run typecheck` | `tsc --noEmit` 타입 검사 |
+| `npm run validate` | `manifest.json` 검증 |
 
 ## 배포
 
@@ -61,6 +62,13 @@ src/
 목록 순서·묶음·제목·UTM은 모두 `templates/manifest.json` 이 결정합니다.
 
 ## 사용중 / 중단
+
+> `manifest.json` 은 GitHub에서 직접 고치는 파일입니다. 쉼표 같은 문법 오류는
+> 빌드가 잡지만, **파일명 오타나 `paused` → `pause` 같은 값 오타는 빌드를
+> 통과합니다.** 특히 status 오타는 조용히 `active` 로 취급되어 중단한 줄 알았던
+> 시안이 계속 노출됩니다. 그래서 배포 전에 `npm run validate` 가 돌아갑니다 —
+> 필수 항목, id 중복, 없는 파일, 안 쓰는 파일, status 값, utm 키, subjects 를
+> 확인하고 문제가 있으면 배포를 막습니다.
 
 더 안 쓰는 시안은 지우지 말고 `status` 를 `paused` 로 바꿉니다. **`utm` 과
 `subjects` 설정은 그대로 남아 있어서** 나중에 `active` 로 되돌리면 바로 다시
