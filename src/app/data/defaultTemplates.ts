@@ -8,6 +8,10 @@ export interface EmailTemplate {
   css: string;
   /** 저장소 기준 경로. "GitHub에서 열기"가 이 파일의 편집 화면을 연다. */
   path: string;
+  /** 시안 목록에서 묶이는 단위. 같은 group끼리 한 묶음으로 보인다. */
+  group: string;
+  /** 묶음 안에서의 이름. 예: "단일홍보 A안" */
+  label: string;
 }
 
 /**
@@ -38,4 +42,6 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = manifest.map(t => ({
   html: read(t.file),
   css: '',
   path: `templates/${t.file}`,
+  group: t.group,
+  label: t.label,
 }));

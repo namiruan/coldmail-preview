@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Copy, Check, Mail,
@@ -202,9 +202,34 @@ export function EmailPreview() {
   const [darkMode, setDarkMode] = useState(false);
   const [codeModalOpen, setCodeModalOpen] = useState(false);
 
+  // manifest 순서를 유지하며 group으로 묶는다.
+  const groups = useMemo(() => {
+    const out: { name: string; items: typeof templates }[] = [];
+    for (const t of templates) {
+      const last = out[out.length - 1];
+      if (last && last.name === t.group) last.items.push(t);
+      else out.push({ name: t.group, items: [t] });
+    }
+    return out;
+  }, [templates]);
+
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleGroup = useCallback((name: string) => {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+  }, []);
+
   const current = templates.find(t => t.id === activeId) ?? templates[0];
   const currentIndex = templates.findIndex(t => t.id === activeId);
   const subject = getSubject(current.html);
+  useEffect(() => {
+    const g = templates.find(t => t.id === activeId)?.group;
+    if (g) setCollapsed(prev => (prev.has(g) ? new Set([...prev].filter(x => x !== g)) : prev));
+  }, [activeId, templates]);
+
   const lightHtml = buildLightHtml(current.html, current.css);
 
   const isFixed = hasColorSchemeFix(current.html);
@@ -351,56 +376,79 @@ export function EmailPreview() {
             </button>
           </div>
 
-          {/* Template List */}
+          {/* Template List — group별로 묶고, 그룹 제목을 눌러 접는다 */}
           <div className="flex-1 overflow-y-auto flex flex-col">
-            {templates.map((t) => {
-              const isActive = t.id === activeId;
+            {groups.map((g) => {
+              const isCollapsed = collapsed.has(g.name);
               return (
-                <div
-                  key={t.id}
-                  className="group relative w-full transition-colors"
-                  style={{
-                    borderLeft: isActive ? `2px solid ${sideActiveBorder}` : '2px solid transparent',
-                    background: isActive ? sideActive : 'transparent',
-                    // 아이콘 뒤를 덮어 긴 이름과 겹쳐 보이지 않게 한다
-                    ['--row-bg' as string]: isActive ? sideActive : sideBg,
-                  } as React.CSSProperties}
-                  onMouseEnter={e => {
-                    if (isActive) return;
-                    e.currentTarget.style.background = sideHover;
-                    e.currentTarget.style.setProperty('--row-bg', sideHover);
-                  }}
-                  onMouseLeave={e => {
-                    if (isActive) return;
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.setProperty('--row-bg', sideBg);
-                  }}
-                >
+                <div key={g.name}>
                   <button
-                    onClick={() => setActiveId(t.id)}
-                    className="w-full text-left px-4 py-2.5"
-                    style={{
-                      color: isActive
-                        ? isDark ? '#93c5fd' : '#1d4ed8'
-                        : isDark ? '#888' : '#374151',
-                      fontWeight: isActive ? 600 : 400,
-                    }}
+                    onClick={() => toggleGroup(g.name)}
+                    className="w-full flex items-center gap-1.5 px-3 py-2 transition-colors"
+                    style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = sideHover; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    aria-expanded={!isCollapsed}
+                    title={isCollapsed ? `${g.name} 펼치기` : `${g.name} 접기`}
                   >
-                    <span className="text-xs">{t.name}</span>
+                    <ChevronDown
+                      className="w-3 h-3 shrink-0 transition-transform"
+                      style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none' }}
+                    />
+                    <span className="text-[11px] font-semibold tracking-wide truncate">{g.name}</span>
+                    <span className="ml-auto text-[10px] tabular-nums opacity-60">{g.items.length}</span>
                   </button>
-                  {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다.
-                      선택된 항목은 항상, 나머지는 hover·focus 때 나타난다. */}
-                  <a
-                    href={blobUrl(t.path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`GitHub에서 원본 열기 — ${t.path}`}
-                    aria-label={`${t.name} 원본 소스를 GitHub에서 열기`}
-                    className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none"
-                    style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
-                  >
-                    <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
-                  </a>
+
+                  {!isCollapsed && g.items.map((t) => {
+                    const isActive = t.id === activeId;
+                    return (
+                      <div
+                        key={t.id}
+                        className="group relative w-full transition-colors"
+                        style={{
+                          borderLeft: isActive ? `2px solid ${sideActiveBorder}` : '2px solid transparent',
+                          background: isActive ? sideActive : 'transparent',
+                          // 아이콘 뒤를 덮어 긴 이름과 겹쳐 보이지 않게 한다
+                          ['--row-bg' as string]: isActive ? sideActive : sideBg,
+                        } as React.CSSProperties}
+                        onMouseEnter={e => {
+                          if (isActive) return;
+                          e.currentTarget.style.background = sideHover;
+                          e.currentTarget.style.setProperty('--row-bg', sideHover);
+                        }}
+                        onMouseLeave={e => {
+                          if (isActive) return;
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.setProperty('--row-bg', sideBg);
+                        }}
+                      >
+                        <button
+                          onClick={() => setActiveId(t.id)}
+                          className="w-full text-left pl-7 pr-4 py-2 transition-colors"
+                          style={{
+                            color: isActive
+                              ? isDark ? '#93c5fd' : '#1d4ed8'
+                              : isDark ? '#888' : '#374151',
+                            fontWeight: isActive ? 600 : 400,
+                          }}
+                        >
+                          <span className="text-xs">{t.label}</span>
+                        </button>
+                        {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다. */}
+                        <a
+                          href={blobUrl(t.path)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`GitHub에서 원본 열기 — ${t.path}`}
+                          aria-label={`${t.name} 원본 소스를 GitHub에서 열기`}
+                          className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+                          style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
+                        >
+                          <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
+                        </a>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
