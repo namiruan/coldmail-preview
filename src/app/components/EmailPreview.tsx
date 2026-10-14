@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Copy, Check, Mail,
   ChevronDown, ChevronLeft, ChevronUp, ChevronRight, Star,
-  MoreHorizontal, Code, X, Sun, Moon, AlertTriangle, Code2, FileCode2,
+  MoreHorizontal, Code, X, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
-import { blobUrl, MANIFEST_PATH } from '../data/repo';
+import { blobUrl, DOC_PATH } from '../data/repo';
 import { subjectTerm } from '../data/defaultTemplates';
 import { applyUtm } from '../data/utm';
 
@@ -346,6 +346,21 @@ export function EmailPreview() {
             </button>
           </div>
 
+          {/* 시안 관리 문서 — 그룹·상태·UTM·제목이 전부 여기서 결정된다 */}
+          <a
+            href={blobUrl(DOC_PATH)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="시안 관리 문서 열기 — 그룹·사용 상태·UTM·제목을 여기서 고칩니다"
+            aria-label="시안 관리 문서를 GitHub에서 열기"
+            className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
+              isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-[#2a2a2e]'
+                     : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+          </a>
+
           {/* Code button */}
           <button
             onClick={() => setCodeModalOpen(true)}
@@ -542,10 +557,10 @@ export function EmailPreview() {
                             );
                           })}
                           <a
-                            href={blobUrl(MANIFEST_PATH)}
+                            href={blobUrl(DOC_PATH)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title={`GitHub에서 제목 원본 열기 — ${MANIFEST_PATH}`}
+                            title={`GitHub에서 제목 원본 열기 — ${DOC_PATH}`}
                             aria-label={`${t.name} 제목 변형을 GitHub에서 열기`}
                             className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover/sub:opacity-100 focus:opacity-100 focus:outline-none"
                             style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}

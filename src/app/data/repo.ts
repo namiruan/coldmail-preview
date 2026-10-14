@@ -8,5 +8,5 @@ export const blobUrl = (path: string) => `${REPO}/blob/${BRANCH}/${path}`;
 /** 파일을 고치는 화면. 로그인을 요구하고, 쓰기 권한이 없으면 fork 후 변경 제안으로 안내된다. */
 export const editUrl = (path: string) => `${REPO}/edit/${BRANCH}/${path}`;
 
-/** 제목 변형은 본문 파일을 공유한다. 고칠 곳은 manifest다. */
-export const MANIFEST_PATH = 'templates/manifest.json';
+/** 시안 설정의 원본 문서. 그룹·상태·UTM·제목 변형이 전부 여기에 있다. */
+export const DOC_PATH = 'templates/README.md';

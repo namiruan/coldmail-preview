@@ -29,7 +29,7 @@ npm run dev      # http://localhost:5173
 | `npm run build` | `dist/` 로 프로덕션 빌드 |
 | `npm run preview` | 빌드 결과물을 로컬에서 서빙 |
 | `npm run typecheck` | `tsc --noEmit` 타입 검사 |
-| `npm run validate` | `manifest.json` 검증 |
+| `npm run validate` | `templates/README.md` 검증 |
 
 ## 배포
 
@@ -59,11 +59,11 @@ src/
 ```
 
 템플릿을 추가하거나 고치려면 `templates/` 의 `.html` 파일을 편집하고 커밋합니다.
-목록 순서·묶음·제목·UTM은 모두 `templates/manifest.json` 이 결정합니다.
+목록 순서·묶음·제목·UTM은 모두 `templates/README.md` 이 결정합니다.
 
 ## 사용중 / 중단
 
-> `manifest.json` 은 GitHub에서 직접 고치는 파일입니다. 쉼표 같은 문법 오류는
+> `templates/README.md` 은 GitHub에서 직접 고치는 파일입니다. 쉼표 같은 문법 오류는
 > 빌드가 잡지만, **파일명 오타나 `paused` → `pause` 같은 값 오타는 빌드를
 > 통과합니다.** 특히 status 오타는 조용히 `active` 로 취급되어 중단한 줄 알았던
 > 시안이 계속 노출됩니다. 그래서 배포 전에 `npm run validate` 가 돌아갑니다 —
@@ -74,31 +74,34 @@ src/
 `subjects` 설정은 그대로 남아 있어서** 나중에 `active` 로 되돌리면 바로 다시
 쓸 수 있습니다.
 
-```json
-{ "id": "02", "status": "paused", ... }
-```
+| ID | 그룹 | 이름 | 파일 | 상태 | source | medium | campaign | content |
+|----|------|------|------|------|--------|--------|----------|---------|
+| 01 | 안면인식서비스 | 단일홍보 A안 | 01-face-promo-a.html | 사용중 | kbz_mail | email | face_2026 | mail-a |
+
+제목 변형은 아래 `## 제목 변형` 표에 ID로 연결된 줄을 추가합니다.
 
 중단된 시안은 목록에서 숨겨지고, `시안 목록` 오른쪽의 `중단 N` 을 누르면
 흐린 표시와 `중단` 배지와 함께 다시 보입니다. 중단된 시안을 열면 본문 위에
 경고가 뜹니다.
 
-`status` 는 manifest에 있으니 git에 남고 팀 전체가 같은 값을 봅니다. 반면
+`status` 는 문서에 있으니 git에 남고 팀 전체가 같은 값을 봅니다. 반면
 `중단 N` 토글은 **보기 설정이라 브라우저에만 저장**되어 사람마다 따로입니다.
-정적 사이트라 브라우저에서 manifest에 쓸 수 없으므로, 상태를 바꾸려면
-manifest를 고쳐 커밋합니다 (목록의 원본 링크에서 바로 열립니다).
+정적 사이트라 브라우저에서 문서에 쓸 수 없으므로, 상태를 바꾸려면
+문서를 고쳐 커밋합니다 (목록의 원본 링크에서 바로 열립니다).
 
 ## 제목 A/B 테스트와 UTM
 
-**UTM의 원본은 `manifest.json` 입니다.** 코드 보기로 내보낼 때 HTML 안의
-`utm_*` 를 manifest 값으로 맞춥니다. 이미 `utm_` 을 하나라도 달고 있는 링크만
+**UTM의 원본은 `templates/README.md` 입니다.** 코드 보기로 내보낼 때 HTML 안의
+`utm_*` 를 문서의 값으로 맞춥니다. 이미 `utm_` 을 하나라도 달고 있는 링크만
 대상이라, 로고·푸터처럼 추적하지 않는 링크는 건드리지 않습니다.
 
 본문이 같고 **제목만 다른 A/B** 는 파일을 복제하지 말고 `subjects` 에 변형을
 추가합니다. 2개 이상이면 **시안 목록에서 선택한 시안 아래에** `제목 A B` 토글이
 나타나고, 고른 변형에 맞춰 `<title>` 과 `utm_term` 이 반영된 HTML이 나옵니다.
 
-원본 링크는 행마다 갈립니다 — **본문 행은 `.html`**, **제목 행은 `manifest.json`**
-으로 갑니다. 제목 변형은 본문 파일을 공유하므로, 제목을 고칠 곳은 manifest입니다.
+원본 링크는 행마다 갈립니다 — **본문 행은 `.html`**, **제목 행은 `templates/README.md`**
+으로 갑니다. 제목 변형은 본문 파일을 공유하므로, 제목을 고칠 곳은 이 문서입니다.
+헤더의 ⚙ 설정 아이콘으로도 바로 열립니다.
 
 ```json
 {

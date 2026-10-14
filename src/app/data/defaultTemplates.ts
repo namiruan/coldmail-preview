@@ -1,4 +1,6 @@
-import manifest from '../../../templates/manifest.json';
+import doc from '../../../templates/README.md?raw';
+// 검증 스크립트(Node)와 같은 파서를 쓰려고 평범한 JS로 둔 모듈이다.
+import { parseTemplatesDoc } from './parseTemplatesDoc.js';
 import type { Utm } from './utm';
 
 export interface EmailTemplate {
@@ -57,7 +59,18 @@ function read(file: string): string {
   return html;
 }
 
-export const DEFAULT_TEMPLATES: EmailTemplate[] = manifest.map(t => ({
+const parsed = parseTemplatesDoc(doc) as { templates: RawTemplate[]; errors: string[] };
+if (parsed.errors.length) {
+  // 배포 전 npm run validate 가 막지만, 로컬 편집 중에는 바로 보이게 한다.
+  console.error('templates/README.md 를 읽는 중 문제:\n  ' + parsed.errors.join('\n  '));
+}
+
+interface RawTemplate {
+  id: string; name: string; group: string; label: string; file: string;
+  status: TemplateStatus; utm?: Utm; subjects?: SubjectVariant[];
+}
+
+export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
   id: t.id,
   name: t.name,
   html: read(t.file),
@@ -65,9 +78,9 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = manifest.map(t => ({
   path: `templates/${t.file}`,
   group: t.group,
   label: t.label,
-  status: (t as { status?: string }).status === 'paused' ? 'paused' : 'active',
-  utm: 'utm' in t ? (t.utm as Utm) : undefined,
-  subjects: 'subjects' in t ? (t.subjects as SubjectVariant[]) : undefined,
+  status: t.status,
+  utm: t.utm,
+  subjects: t.subjects,
 }));
 
 /** 변형의 utm_term 값. 따로 적지 않았으면 key에서 만든다. */
