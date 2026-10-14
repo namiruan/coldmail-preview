@@ -17,7 +17,14 @@ export interface EmailTemplate {
   utm?: Utm;
   /** 제목 변형. 2개 이상이면 미리보기에 전환 UI가 뜬다. 없으면 HTML의 <title>을 쓴다. */
   subjects?: SubjectVariant[];
+  /**
+   * 사용 상태. paused로 바꿔도 utm·subjects 설정은 그대로 남는다 —
+   * 더 안 쓰는 시안을 지우는 대신 표시만 해 두기 위한 값이다.
+   */
+  status: TemplateStatus;
 }
+
+export type TemplateStatus = 'active' | 'paused';
 
 export interface SubjectVariant {
   /** 변형 식별자. utm_term 기본값으로도 쓰인다. */
@@ -58,6 +65,7 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = manifest.map(t => ({
   path: `templates/${t.file}`,
   group: t.group,
   label: t.label,
+  status: (t as { status?: string }).status === 'paused' ? 'paused' : 'active',
   utm: 'utm' in t ? (t.utm as Utm) : undefined,
   subjects: 'subjects' in t ? (t.subjects as SubjectVariant[]) : undefined,
 }));
