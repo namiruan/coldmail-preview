@@ -35,6 +35,8 @@ export interface SubjectVariant {
   text: string;
   /** utm_term 을 따로 지정할 때. 생략하면 `subj-{key}` */
   term?: string;
+  /** 이 변형만 utm_content 를 덮어쓸 때. 제목 A/B를 content로 가르던 방식을 위한 것. */
+  content?: string;
 }
 
 /**

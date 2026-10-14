@@ -274,13 +274,20 @@ export function EmailPreview() {
     let html = current.html;
     if (variant) {
       const title = variant.text.replace(/[<>]/g, '');
-      html = /<title[^>]*>[^<]*<\/title>/i.test(html)
-        ? html.replace(/<title([^>]*)>[^<]*<\/title>/i, `<title$1>${title}</title>`)
-        : html;
+      if (/<title[^>]*>[^<]*<\/title>/i.test(html)) {
+        html = html.replace(/<title([^>]*)>[^<]*<\/title>/i, `<title$1>${title}</title>`);
+      } else {
+        // <title>이 없는 템플릿도 있다. 그대로 두면 메일 제목이 비므로 head에 넣어 준다.
+        html = html.replace(/<\/head>/i, `  <title>${title}</title>\n</head>`);
+      }
     }
-    return applyUtm(html, current.utm && variant
-      ? { ...current.utm, term: variants.length > 1 ? subjectTerm(variant) : current.utm.term }
-      : current.utm);
+    if (!current.utm) return applyUtm(html, undefined);
+    if (!variant) return applyUtm(html, current.utm);
+    return applyUtm(html, {
+      ...current.utm,
+      ...(variants.length > 1 && !variant.content ? { term: subjectTerm(variant) } : {}),
+      ...(variant.content ? { content: variant.content } : {}),
+    });
   }, [current, variant, variants.length]);
   useEffect(() => { setSubjectKey(null); }, [activeId]);
 
