@@ -22,6 +22,18 @@ const EMAIL_META = {
 };
 
 /**
+ * 목록 왼쪽의 상태 표시. 색만으로 가르면 색각 이상인 사람이 구분하지 못하므로
+ * 도형도 함께 다르게 둔다 — 채운 원 / 빈 원 / 네모.
+ */
+const STATUS_DOT = {
+  active: { shape: 'circle', fill: true,  tone: (d: boolean) => (d ? '#4ade80' : '#34c76a') },
+  draft:  { shape: 'circle', fill: false, tone: (d: boolean) => (d ? '#60a5fa' : '#3b82f6') },
+  ended:  { shape: 'square', fill: true,  tone: (d: boolean) => (d ? '#6b7280' : '#9ca3af') },
+} as const;
+
+const STATUS_LABEL = { active: '사용중', draft: '미사용', ended: '운영종료' } as const;
+
+/**
  * 상태별 표시 규칙. 운영종료는 끝난 것이라 목록에서 숨기지만,
  * 미사용은 띄우기 전에 검토할 대상이라 그대로 보여준다.
  */
@@ -553,7 +565,8 @@ export function EmailPreview() {
                       >
                         <button
                           onClick={() => setActiveId(t.id)}
-                          className="w-full text-left pl-7 pr-4 py-2 transition-colors"
+                          title={`${t.label} — ${STATUS_LABEL[t.status]}`}
+                          className="w-full text-left pl-5 pr-4 py-2 flex items-center gap-2 transition-colors"
                           style={{
                             color: isActive
                               ? isDark ? '#93c5fd' : '#1d4ed8'
@@ -561,20 +574,29 @@ export function EmailPreview() {
                             fontWeight: isActive ? 600 : 400,
                           }}
                         >
-                          <span className="text-xs" style={{ opacity: STATUS_UI[t.status]?.dim ?? 1 }}>
+                          {/* 상태 표시 — 자리를 고정해 이름 길이와 무관하게 세로로 정렬된다 */}
+                          <span
+                            aria-hidden
+                            className="shrink-0"
+                            style={{
+                              width: 7,
+                              height: 7,
+                              borderRadius: STATUS_DOT[t.status].shape === 'circle' ? '50%' : 1,
+                              background: STATUS_DOT[t.status].fill
+                                ? STATUS_DOT[t.status].tone(isDark)
+                                : 'transparent',
+                              border: STATUS_DOT[t.status].fill
+                                ? 'none'
+                                : `1.5px solid ${STATUS_DOT[t.status].tone(isDark)}`,
+                            }}
+                          />
+                          <span
+                            className="text-xs min-w-0 truncate"
+                            style={{ opacity: STATUS_UI[t.status]?.dim ?? 1 }}
+                          >
                             {t.label}
                           </span>
-                          {STATUS_UI[t.status] && (
-                            <span
-                              className="ml-1.5 px-1 py-px rounded text-[9px] align-middle whitespace-nowrap"
-                              style={{
-                                background: STATUS_UI[t.status]!.tone(isDark).bg,
-                                color: STATUS_UI[t.status]!.tone(isDark).fg,
-                              }}
-                            >
-                              {STATUS_UI[t.status]!.label}
-                            </span>
-                          )}
+                          <span className="sr-only">{STATUS_LABEL[t.status]}</span>
                         </button>
                         {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다. */}
                         <a
@@ -659,6 +681,28 @@ export function EmailPreview() {
             >
               <ChevronDown className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* 범례 — 설명을 행마다 반복하지 않고 한 곳에 둔다 */}
+          <div
+            className="px-4 py-2 flex items-center justify-center gap-3 text-[10px]"
+            style={{ borderTop: `1px solid ${sideBorder}`, color: isDark ? '#555' : '#9ca3af' }}
+          >
+            {(['active', 'draft', 'ended'] as const).map(k => (
+              <span key={k} className="flex items-center gap-1">
+                <span
+                  aria-hidden
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: STATUS_DOT[k].shape === 'circle' ? '50%' : 1,
+                    background: STATUS_DOT[k].fill ? STATUS_DOT[k].tone(isDark) : 'transparent',
+                    border: STATUS_DOT[k].fill ? 'none' : `1.5px solid ${STATUS_DOT[k].tone(isDark)}`,
+                  }}
+                />
+                {STATUS_LABEL[k]}
+              </span>
+            ))}
           </div>
 
           {/* 현재 위치 표시 */}
