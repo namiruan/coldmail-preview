@@ -322,17 +322,22 @@ body {
 .rail__variants:hover .rail__source,
 .rail__source:focus-visible { opacity: 1; }
 
-/* 시안 A/B 전환 줄 — 활성 면 바로 아래에 붙으므로 면을 또 깔지 않는다 */
+/* 시안 A/B 전환 줄 — 활성 면 바로 아래에 붙으므로 면을 또 깔지 않는다.
+   **제목 줄에 딸린 것이라 바짝 붙인다.** 위아래 여백을 똑같이 두었더니 제 줄
+   하나처럼 떠서, 어느 제목의 전환인지 눈으로 이어지지 않았다. 위는 좁히고
+   아래만 남긴다 — 위가 붙고 아래가 벌어져야 묶음의 끝이 보인다. */
 .rail__variants {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-gap-sm);
   width: 100%;
-  padding: var(--space-6) var(--space-12) var(--space-4);
+  padding: 0 var(--space-12) var(--space-8);
   padding-left: var(--rail-name-col);
   --row-bg: var(--color-surface-base);
 }
+/* 시안 줄이 따라붙는 제목 줄은 아래 여백을 줄인다 */
+.rail__entry:has(.rail__variants) .rail__item-btn { padding-bottom: var(--space-4); }
 
 .rail__foot {
   display: flex;
