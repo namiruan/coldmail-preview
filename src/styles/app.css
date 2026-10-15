@@ -135,7 +135,13 @@ body {
   overflow-y: auto;
   padding-inline: var(--space-8);
 }
-/* 필터를 다 끄면 EmptyState 가 선다. 레일이 좁아 글줄과 아이콘만 한 칸 줄인다 */
+/* 필터를 다 끄면 EmptyState 가 선다. 레일이 좁아 글줄과 아이콘만 한 칸 줄이고,
+   빌 때는 목록 칸 한가운데에 세운다 — 위에 붙으면 아래가 통째로 빈 자리로 남는다. */
+.rail__list:has(.empty-state) {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .rail__list .empty-state__description { word-break: keep-all; }
 .rail__list .empty-state__icon { width: 48px; height: 48px; }
 
