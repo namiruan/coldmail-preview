@@ -99,12 +99,19 @@ body {
   --rail-state-col: 7px;
   --rail-name-col: calc(var(--space-12) + var(--rail-state-col) + var(--space-8));
 }
+/* 이동 줄 — 화살표 둘과 현재 위치가 한 줄에 선다 */
+.rail__pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-inset-md) var(--space-inset-xl) var(--space-inset-xl);
+}
 /* 이전·다음 — 결정이 아니라 이동이라 면을 갖지 않는다 */
 .rail__step {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
   height: var(--height-compact);
   border-radius: var(--radius-sm);
   color: var(--color-text-subtle);
@@ -131,16 +138,16 @@ body {
    **1단계는 구역이다.** 여백만으로 나누면 어디서 끝났는지가 흐려진다. 선을 그어
    끝을 말하고, 색을 본문색까지 올려 2단계(그룹·흐림)와 갈라 놓는다. */
 /* 구역(대분류) 경계는 묶음 경계와 **두 가지로** 갈린다.
-   하나는 색 — border-strong 은 "섹션 경계 … 행 구분선(subtle)보다 위계가 높은 선"
-   (tokens/color.css). 다른 하나는 길이 — 구역 선은 레일을 가로질러 **끝에서 끝까지**
-   가고, 묶음 선은 글자가 서는 안쪽에서만 간다. 한 단계 진하기만으로는 두 선이
-   같은 종류로 보인다. */
+   하나는 **길이** — 구역 선은 레일을 가로질러 끝에서 끝까지 가고, 묶음 선은 글자가
+   서는 안쪽에서만 간다. 다른 하나는 색으로, subtle ↔ faint 한 단계만 벌린다.
+   (border-strong(gray-500)을 써 봤는데 1px이어도 목록에서 가장 진한 것이 되어
+   선이 내용보다 먼저 읽혔다. 길이가 이미 갈라 주므로 색까지 세게 둘 이유가 없다.) */
 .rail__block + .rail__block {
   margin-top: var(--space-12);
   /* 목록의 좌우 여백(--space-8)을 되돌려 레일 끝까지 긋는다 */
   margin-inline: calc(-1 * var(--space-8));
   padding-inline: var(--space-8);
-  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-strong);
+  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
 }
 /* 가장 바깥 — 항목 줄의 왼쪽 끝에 선다. 위의 선·자간·본문색이 구역임을 말하므로
    줄처럼 읽히지 않는다. */
@@ -353,7 +360,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-inset-md) var(--space-inset-sm);
+  padding: var(--space-inset-md) var(--space-inset-sm) 0;
   border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
   font-size: var(--font-size-meta);
   line-height: var(--line-height-ui);
@@ -381,8 +388,8 @@ body {
 .rail__filter[aria-pressed="false"] .rail__state { color: var(--color-text-disabled-faint); }
 .rail__filter-count { font-variant-numeric: tabular-nums; opacity: 0.7; }
 .rail__position {
-  padding: var(--space-inset-lg) var(--space-inset-lg);
-  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+  flex: none;
+  min-width: 56px;
   text-align: center;
   font-size: var(--font-size-meta);
   font-variant-numeric: tabular-nums;

@@ -480,13 +480,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
 
         {/* ── Left Sidebar: Template List ── */}
         <aside className="rail">
-          {/* 위 화살표 */}
-          <div style={{ padding: 'var(--space-inset-xl) var(--space-inset-xl) 0' }}>
-            <button onClick={goPrev} disabled={currentIndex === 0} className="rail__step" title="이전 시안">
-              <ChevronUp className="ico-sm" />
-            </button>
-          </div>
-
           {/* Template List — group별로 묶고, 그룹 제목을 눌러 접는다 */}
           <div className="rail__list">
             {sections.map(sec => (
@@ -577,18 +570,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             ))}
           </div>
 
-          {/* 아래 화살표 */}
-          <div style={{ padding: '0 var(--space-inset-xl) var(--space-inset-md)' }}>
-            <button
-              onClick={goNext}
-              disabled={currentIndex === templates.length - 1}
-              className="rail__step"
-              title="다음 시안"
-            >
-              <ChevronDown className="ico-sm" />
-            </button>
-          </div>
-
           {/* 범례가 곧 필터다 — 도형의 뜻을 적어 두는 자리와 켜고 끄는 자리가 같다 */}
           <div className="rail__foot">
             {(['active', 'draft', 'ended'] as const).map(k => {
@@ -609,7 +590,22 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             })}
           </div>
 
-          <div className="rail__position">{currentIndex + 1} / {templates.length}</div>
+          {/* 이동 — 화살표 둘과 현재 위치를 한 줄에 모은다. 셋 다 "목록에서 어디쯤인가"를
+              말하는 것이라 따로 두면 레일 아래가 세 줄이 된다. */}
+          <div className="rail__pager">
+            <button onClick={goPrev} disabled={currentIndex === 0} className="rail__step" title="이전 시안">
+              <ChevronUp className="ico-sm" />
+            </button>
+            <span className="rail__position">{currentIndex + 1} / {templates.length}</span>
+            <button
+              onClick={goNext}
+              disabled={currentIndex === templates.length - 1}
+              className="rail__step"
+              title="다음 시안"
+            >
+              <ChevronDown className="ico-sm" />
+            </button>
+          </div>
         </aside>
 
         {/* ── Preview Area ── */}
