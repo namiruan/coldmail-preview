@@ -477,7 +477,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
           </div>
 
           {/* 위 화살표 */}
-          <div style={{ padding: '0 var(--space-inset-xl) var(--space-inset-sm)' }}>
+          <div style={{ padding: 'var(--space-inset-md) var(--space-inset-xl) 0' }}>
             <button onClick={goPrev} disabled={currentIndex === 0} className="rail__step" title="이전 시안">
               <ChevronUp className="ico-sm" />
             </button>
@@ -564,7 +564,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
           </div>
 
           {/* 아래 화살표 */}
-          <div style={{ padding: 'var(--space-inset-sm) var(--space-inset-xl) var(--space-inset-xl)' }}>
+          <div style={{ padding: '0 var(--space-inset-xl) var(--space-inset-md)' }}>
             <button
               onClick={goNext}
               disabled={currentIndex === templates.length - 1}
