@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
 import { blobUrl, DOC_PATH } from '../data/repo';
+import { variantKind } from '../data/variantKind.js';
 import { EditorPanel } from './EditorPanel';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { editUrl } from '../data/repo';
@@ -120,11 +121,16 @@ function Banner({
 /**
  * 목록에서 선택된 항목 아래에 붙는 시안 전환 줄.
  * A·B는 동시에 고를 수 없는 선택지라 Segment 를 쓴다 — 머리말의 PC/모바일과 같은 컨트롤이다.
+ *
+ * 라벨은 **무엇으로 갈리는지**를 직접 말한다 — `제목 A` / `전체 A`.
+ * 따로 "시안"이라고 적어 두면 한 줄에 같은 말이 두 번 있는 셈이고,
+ * 정작 궁금한 "무엇이 다른가"는 어디에도 없었다.
  */
 function VariantRow({
-  caption, options, selected, onSelect, href, hrefTitle, hrefLabel,
+  kind, options, selected, onSelect, href, hrefTitle, hrefLabel,
 }: {
-  caption: string;
+  /** 무엇으로 갈리는지 — '제목' 또는 '전체' */
+  kind: string;
   /** key는 선택 식별용, label은 화면에 찍히는 글자(A·B)다. */
   options: { key: string; label?: string; title?: string }[];
   selected: string;
@@ -135,14 +141,13 @@ function VariantRow({
 }) {
   return (
     <div className="rail__variants">
-      <span className="rail__variants-caption">{caption}</span>
       <Segment
-        label={`${caption} 전환`}
+        label={`${kind} 변형 전환`}
         value={selected}
         onChange={onSelect}
         options={options.map(o => ({
           value: o.key,
-          label: (o.label ?? o.key).toUpperCase(),
+          label: `${kind} ${(o.label ?? o.key).toUpperCase()}`,
           title: o.title,
         }))}
       />
@@ -530,7 +535,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                               >
                                 {/* 상태 표시 — 자리를 고정해 이름 길이와 무관하게 세로로 정렬된다 */}
                                 <span aria-hidden className={`rail__state rail__state--${shown.status}`} />
-                                <span aria-hidden className="rail__no">{shown.id}</span>
                                 <span className="rail__item-name">{entry.label}</span>
                                 <span className="sr-only">{STATUS_LABEL[shown.status]}</span>
                               </button>
@@ -555,7 +559,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                             {/* 시안 A/B — 제목만 다른 A/B도 파일이 따로이므로 원본은 해당 .html 로 간다 */}
                             {isActive && hasVariants && (
                               <VariantRow
-                                caption="시안"
+                                kind={variantKind(entry.variants.map(v => v.html))}
                                 options={entry.variants.map(v => ({ key: v.key, label: v.variant, title: v.name }))}
                                 selected={shown.key}
                                 onSelect={key => {

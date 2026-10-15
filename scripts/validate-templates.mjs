@@ -4,6 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseTemplatesDoc, STATUS_TO_KO } from '../src/app/data/parseTemplatesDoc.js';
+import { variantKind } from '../src/app/data/variantKind.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = join(ROOT, 'templates');
@@ -111,15 +112,11 @@ if (errors.length) {
 
 // A/B 묶음의 본문이 같은지 알린다. 제목만 다른 A/B에서 한쪽만 고치면 여기서 드러난다.
 // 본문이 다른 A/B(예: 단일홍보)는 원래 다르므로 막지 않고 알리기만 한다.
-const strip = f => readFileSync(join(DIR, f), 'utf8')
-  .replace(/<title[^>]*>[^<]*<\/title>/gi, '')
-  .replace(/utm_[a-z]+=[^&"']*/g, '')
-  .replace(/\s+/g, ' ').trim();
 const abNotes = [];
 for (const [, group] of entries) {
   if (group.length < 2 || !group.every(t => htmlFiles.includes(t.file))) continue;
-  const same = new Set(group.map(t => strip(t.file))).size === 1;
-  abNotes.push(`${group[0].label} ${same ? '제목만 다름' : '본문도 다름'}`);
+  const kind = variantKind(group.map(t => readFileSync(join(DIR, t.file), 'utf8')));
+  abNotes.push(`${group[0].label} ${kind === '제목' ? '제목만 다름' : '본문도 다름'}`);
 }
 
 const counts = Object.entries(STATUS_TO_KO)
