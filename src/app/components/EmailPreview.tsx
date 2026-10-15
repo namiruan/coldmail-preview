@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef, Fragment } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Check, Mail,
@@ -496,7 +496,8 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                 {sec.groups.map(g => {
                   const isCollapsed = collapsed.has(g.name);
                   return (
-                    <div key={g.name}>
+                    /* 펼치면 머리줄과 항목이 한 면 위에 얹힌다 — 묶음에 속한 것으로 읽힌다 */
+                    <div key={g.name} className={`rail__fold${isCollapsed ? '' : ' rail__fold--open'}`}>
                       <button
                         onClick={() => toggleGroup(g.name)}
                         className="rail__group"
@@ -520,7 +521,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                         const isActive = entry.variants.some(v => v.key === activeKey);
                         const hasVariants = entry.variants.length > 1;
                         return (
-                          <Fragment key={`${entry.label}-${entry.variants[0].key}`}>
+                          <div className="rail__entry" key={`${entry.label}-${entry.variants[0].key}`}>
                             <div className={`rail__item${isActive ? ' rail__item--on' : ''}`}>
                               <button
                                 onClick={() => setActiveKey(shown.key)}
@@ -566,7 +567,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                                 hrefLabel={`${shown.name} 본문 원본을 GitHub에서 열기`}
                               />
                             )}
-                          </Fragment>
+                          </div>
                         );
                       })}
                     </div>
