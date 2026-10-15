@@ -99,21 +99,6 @@ body {
   --rail-state-col: 7px;
   --rail-name-col: calc(var(--space-12) + var(--rail-state-col) + var(--space-8));
 }
-.rail__head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-gap-sm);
-  height: var(--height-topnav);
-  padding-inline: var(--space-inset-xl);
-  border-bottom: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
-}
-.rail__caption {
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-heading);
-  line-height: var(--line-height-ui);
-  color: var(--color-text-label);
-}
-
 /* 이전·다음 — 결정이 아니라 이동이라 면을 갖지 않는다 */
 .rail__step {
   display: flex;
@@ -145,9 +130,17 @@ body {
 /* 대분류 — 콜드메일 / 발신템플릿
    **1단계는 구역이다.** 여백만으로 나누면 어디서 끝났는지가 흐려진다. 선을 그어
    끝을 말하고, 색을 본문색까지 올려 2단계(그룹·흐림)와 갈라 놓는다. */
+/* 구역(대분류) 경계는 묶음 경계와 **두 가지로** 갈린다.
+   하나는 색 — border-strong 은 "섹션 경계 … 행 구분선(subtle)보다 위계가 높은 선"
+   (tokens/color.css). 다른 하나는 길이 — 구역 선은 레일을 가로질러 **끝에서 끝까지**
+   가고, 묶음 선은 글자가 서는 안쪽에서만 간다. 한 단계 진하기만으로는 두 선이
+   같은 종류로 보인다. */
 .rail__block + .rail__block {
-  margin-top: var(--space-8);
-  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+  margin-top: var(--space-12);
+  /* 목록의 좌우 여백(--space-8)을 되돌려 레일 끝까지 긋는다 */
+  margin-inline: calc(-1 * var(--space-8));
+  padding-inline: var(--space-8);
+  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-strong);
 }
 /* 가장 바깥 — 항목 줄의 왼쪽 끝에 선다. 위의 선·자간·본문색이 구역임을 말하므로
    줄처럼 읽히지 않는다. */
@@ -174,9 +167,20 @@ body {
    한 단계 연한 border-faint — "여러 줄 이어질 때 선의 무게가 누적되지 않게"
    (tokens/color.css). */
 .rail__fold + .rail__fold {
+  position: relative;
   margin-top: var(--space-8);
   padding-top: var(--space-8);
-  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-faint);
+}
+/* 선만 안쪽으로 줄인다 — border-top 에 margin-inline 을 쓰면 줄 내용까지 함께 밀린다.
+   글자가 서는 안쪽에서만 그어 구역 선(끝에서 끝까지)과 길이로 갈린다. */
+.rail__fold + .rail__fold::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--space-12);
+  right: var(--space-12);
+  height: var(--stroke-sm);
+  background: var(--color-border-faint);
 }
 
 /* 그룹 — 여닫는 머리줄. components/molecules/accordion.md 의 헤더 신호를
@@ -348,14 +352,34 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-gap-md);
-  padding: var(--space-inset-lg) var(--space-inset-lg);
+  gap: var(--space-2);
+  padding: var(--space-inset-md) var(--space-inset-sm);
   border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
   font-size: var(--font-size-meta);
   line-height: var(--line-height-ui);
   color: var(--color-text-subtle);
 }
-.rail__legend-item { display: flex; align-items: center; gap: var(--space-gap-xs); }
+/* 범례 항목이 곧 필터 버튼이다 — 끈 상태는 잉크를 낮춰 "지금 안 보이는 것"으로 읽힌다 */
+.rail__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  white-space: nowrap;
+  /* button 은 @layer base 에서 제 글자 크기를 받는다 — 부모(.rail__foot)를 상속하지 않는다 */
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-ui);
+  border-radius: var(--radius-xs);
+  color: var(--color-text-label);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-base),
+              color var(--duration-fast) var(--easing-base);
+}
+.rail__filter:hover { background: var(--color-action-neutral-faint); }
+.rail__filter[aria-pressed="false"] { color: var(--color-text-disabled); }
+.rail__filter[aria-pressed="false"] .rail__state { color: var(--color-text-disabled-faint); }
+.rail__filter-count { font-variant-numeric: tabular-nums; opacity: 0.7; }
 .rail__position {
   padding: var(--space-inset-lg) var(--space-inset-lg);
   border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
@@ -364,16 +388,6 @@ body {
   font-variant-numeric: tabular-nums;
   color: var(--color-text-subtle);
 }
-
-/* 운영종료 보기 토글 — 개수를 띄우므로 badge 모양을 쓴다.
-   hover 로 배경을 바꾸면 켜짐(badge--fill)의 면색을 덮어써 꺼진 것처럼 보인다.
-   버튼과 같은 방식으로 바깥에 링을 둘러 면색은 건드리지 않는다. */
-.rail__filter { cursor: pointer; transition: box-shadow var(--duration-fast) var(--easing-base); }
-.rail__filter.badge--line:hover {
-  box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-neutral-subtle),
-              0 0 0 var(--stroke-lg) var(--color-action-neutral-hover);
-}
-.rail__filter.badge--fill:hover { box-shadow: 0 0 0 var(--stroke-lg) var(--color-action-neutral-hover); }
 
 /* ── 미리보기 무대 ───────────────────────── */
 /* 네이버 메일 창을 올려 두는 바닥. 창 자체는 이 규칙 밖이다 */

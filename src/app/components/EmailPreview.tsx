@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Check, Mail,
   ChevronDown, ChevronLeft, ChevronUp, Star,
-  MoreHorizontal, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings, Eye, EyeOff,
+  MoreHorizontal, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
+import { DEFAULT_TEMPLATES, type TemplateStatus } from '../data/defaultTemplates';
 import { blobUrl, DOC_PATH } from '../data/repo';
 import { variantKind } from '../data/variantKind.js';
 import { EditorPanel } from './EditorPanel';
@@ -26,21 +26,18 @@ const EMAIL_META = {
 const STATUS_LABEL = { active: '사용중', draft: '미사용', ended: '운영종료' } as const;
 
 /**
- * 상태별 표시 규칙. 운영종료는 끝난 것이라 목록에서 숨기지만,
- * 미사용은 띄우기 전에 검토할 대상이라 그대로 보여준다.
- * tone 은 Banner·Badge 의 디자인 시스템 변형 이름이다.
+ * 상태별로 본문 위에 뜨는 안내. 목록에서 보이고 안 보이고는 범례의 필터가 정한다.
+ * tone 은 Banner 의 디자인 시스템 변형 이름이다.
  */
 const STATUS_UI = {
   active: null,
   draft: {
     label: '미사용',
-    hidden: false,
     tone: '',               /* banner 기본값 = info */
     notice: '내용을 확인한 뒤 문서에서 상태를 "사용중"으로 바꾸세요.',
   },
   ended: {
     label: '운영종료',
-    hidden: true,
     tone: 'caution',
     notice: '설정은 그대로 남아 있지만 집행이 끝난 시안이니 발송 전에 확인하세요.',
   },
@@ -281,17 +278,34 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
   const [device, setDevice] = useState<DeviceMode>('desktop');
   const [darkMode, setDarkMode] = useState(false);
 
-  const [showPaused, setShowPaused] = useState<boolean>(() => {
-    try { return localStorage.getItem('coldmail:showPaused') === '1'; } catch { return false; }
+  /**
+   * 목록에서 감춘 상태들. 범례가 곧 필터라 여기 하나로 모은다.
+   * 기본값은 운영종료만 감춤 — 끝난 시안이 목록의 절반을 먹지 않게.
+   */
+  const [hidden, setHidden] = useState<Set<TemplateStatus>>(() => {
+    try {
+      const saved = localStorage.getItem('coldmail:hidden');
+      if (saved !== null) return new Set(saved ? saved.split(',') as TemplateStatus[] : []);
+    } catch { /* 못 읽어도 기본값으로 돈다 */ }
+    return new Set<TemplateStatus>(['ended']);
   });
   useEffect(() => {
-    try { localStorage.setItem('coldmail:showPaused', showPaused ? '1' : '0'); } catch { /* 저장 못 해도 동작에는 지장 없다 */ }
-  }, [showPaused]);
+    try { localStorage.setItem('coldmail:hidden', [...hidden].join(',')); } catch { /* 저장 못 해도 동작에는 지장 없다 */ }
+  }, [hidden]);
+  const toggleStatus = useCallback((k: TemplateStatus) => {
+    setHidden(prev => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k); else next.add(k);
+      return next;
+    });
+  }, []);
 
-  const pausedCount = useMemo(
-    () => templates.filter(t => STATUS_UI[t.status]?.hidden).length,
-    [templates],
-  );
+  /** 범례에 적는 상태별 개수 — 감춰도 몇 개가 있는지는 보인다 */
+  const counts = useMemo(() => {
+    const out = { active: 0, draft: 0, ended: 0 } as Record<TemplateStatus, number>;
+    for (const t of templates) out[t.status] += 1;
+    return out;
+  }, [templates]);
 
   /**
    * 분류 → 그룹 → 항목 → 시안 으로 묶는다.
@@ -308,7 +322,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
     const byGroup = new Map<string, Group>();
     const byEntry = new Map<string, Entry>();
     const visible = templates.filter(
-      t => showPaused || !STATUS_UI[t.status]?.hidden || t.key === activeKey,
+      t => !hidden.has(t.status) || t.key === activeKey,
     );
     for (const t of visible) {
       let sec = byCat.get(t.category);
@@ -334,7 +348,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
       e.variants.push(t);
     }
     return out;
-  }, [templates, showPaused, activeKey]);
+  }, [templates, hidden, activeKey]);
 
   const [editorOpen, setEditorOpen] = useState(initialEditorOpen);
   /** 편집 중인 코드. null이면 파일 원본 그대로. */
@@ -466,26 +480,8 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
 
         {/* ── Left Sidebar: Template List ── */}
         <aside className="rail">
-          <div className="rail__head">
-            <span className="rail__caption">시안 목록</span>
-            {pausedCount > 0 && (
-              <button
-                onClick={() => setShowPaused(v => !v)}
-                aria-pressed={showPaused}
-                title={showPaused ? '운영종료 시안 숨기기' : `운영종료 시안 ${pausedCount}개 보기`}
-                /* 운영종료는 끝난 것이라 중립(회색) 계열을 쓴다 — 브랜드색은 "지금 쓰는 것"으로 읽힌다.
-                   보이는 중/숨긴 중은 면 채움과 눈 아이콘 두 가지로 가른다. */
-                className={`badge badge--neutral rail__filter ${showPaused ? 'badge--fill' : 'badge--line'}`}
-                style={{ marginLeft: 'auto' }}
-              >
-                {showPaused ? <Eye className="ico-badge" /> : <EyeOff className="ico-badge" />}
-                운영종료 {pausedCount}
-              </button>
-            )}
-          </div>
-
           {/* 위 화살표 */}
-          <div style={{ padding: 'var(--space-inset-md) var(--space-inset-xl) 0' }}>
+          <div style={{ padding: 'var(--space-inset-xl) var(--space-inset-xl) 0' }}>
             <button onClick={goPrev} disabled={currentIndex === 0} className="rail__step" title="이전 시안">
               <ChevronUp className="ico-sm" />
             </button>
@@ -593,14 +589,24 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             </button>
           </div>
 
-          {/* 범례 — 설명을 행마다 반복하지 않고 한 곳에 둔다 */}
+          {/* 범례가 곧 필터다 — 도형의 뜻을 적어 두는 자리와 켜고 끄는 자리가 같다 */}
           <div className="rail__foot">
-            {(['active', 'draft', 'ended'] as const).map(k => (
-              <span key={k} className="rail__legend-item">
-                <span aria-hidden className={`rail__state rail__state--${k}`} />
-                {STATUS_LABEL[k]}
-              </span>
-            ))}
+            {(['active', 'draft', 'ended'] as const).map(k => {
+              const on = !hidden.has(k);
+              return (
+                <button
+                  key={k}
+                  onClick={() => toggleStatus(k)}
+                  aria-pressed={on}
+                  title={on ? `${STATUS_LABEL[k]} 시안 숨기기` : `${STATUS_LABEL[k]} 시안 ${counts[k]}개 보기`}
+                  className="rail__filter"
+                >
+                  <span aria-hidden className={`rail__state rail__state--${k}`} />
+                  {STATUS_LABEL[k]}
+                  <span className="rail__filter-count">{counts[k]}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="rail__position">{currentIndex + 1} / {templates.length}</div>
