@@ -501,8 +501,8 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                 {sec.groups.map(g => {
                   const isCollapsed = collapsed.has(g.name);
                   return (
-                    /* 펼치면 머리줄과 항목이 한 면 위에 얹힌다 — 묶음에 속한 것으로 읽힌다 */
-                    <div key={g.name} className={`rail__fold${isCollapsed ? '' : ' rail__fold--open'}`}>
+                    /* 묶음 사이는 선으로 가른다 — 면은 선택에만 남긴다 */
+                    <div key={g.name} className="rail__fold">
                       <button
                         onClick={() => toggleGroup(g.name)}
                         className="rail__group"

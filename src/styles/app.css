@@ -162,15 +162,18 @@ body {
   color: var(--color-text-body);
 }
 
-/* 펼친 묶음 — 머리줄과 항목이 한 면 위에 얹힌다.
-   components/molecules/accordion.md 의 카드(헤더+바디가 한 면, radius, overflow)를
-   레일 밀도로 옮긴 것이다. 면이 없으면 항목들이 묶음에 속한 것으로 읽히지 않는다.
-   접힌 묶음에는 감쌀 바디가 없으므로 면도 없다. */
-.rail__fold + .rail__fold { margin-top: var(--space-4); }
-.rail__fold--open {
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-subtle);
-  padding-bottom: var(--space-4);
+/* 묶음 사이 — **면이 아니라 선이다.**
+   한때 묶음마다 회색 면을 깔았다. 구분은 됐지만 목록에 면이 넷 다섯 겹치면서
+   복잡해졌고, 정작 하나뿐이어야 할 **선택 면**이 그 안에 묻혔다.
+   선은 끝을 말하면서도 바탕을 어지럽히지 않는다 — 면은 선택에만 남긴다.
+
+   선 무게는 두 단계다. 구역(대분류) 사이는 border-subtle, 묶음 사이는 그보다
+   한 단계 연한 border-faint — "여러 줄 이어질 때 선의 무게가 누적되지 않게"
+   (tokens/color.css). */
+.rail__fold + .rail__fold {
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-faint);
 }
 
 /* 그룹 — 여닫는 머리줄. components/molecules/accordion.md 의 헤더 신호를
@@ -256,10 +259,9 @@ body {
   --row-bg: var(--color-surface-base);
   transition: background var(--duration-fast) var(--easing-base);
 }
-/* 묶음 면(gray-50) 위에 얹히므로 hover 는 그보다 진해야 보인다 */
 .rail__item:hover:not(.rail__item--on) {
-  background: var(--color-action-neutral-hover);
-  --row-bg: var(--color-action-neutral-hover);
+  background: var(--color-surface-subtle);
+  --row-bg: var(--color-surface-subtle);
 }
 /* 면은 .rail__entry 가 깐다 — 여기서 또 깔면 한 선택에 색이 둘이 된다 */
 .rail__item--on {
