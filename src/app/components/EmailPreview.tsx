@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Check, Mail,
   ChevronDown, ChevronLeft, ChevronUp, Star,
-  MoreHorizontal, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings,
+  MoreHorizontal, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings, Eye, EyeOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
@@ -57,9 +57,10 @@ const STATUS_UI = {
 function Segment<T extends string>({
   options, value, onChange, label,
 }: {
-  options: { value: T; icon?: React.ReactNode; label: string }[];
+  options: { value: T; icon?: React.ReactNode; label: string; title?: string }[];
   value: T;
   onChange: (v: T) => void;
+  /** 스크린리더용 그룹 이름 */
   label: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -83,6 +84,7 @@ function Segment<T extends string>({
             key={o.value}
             data-on={on}
             onClick={() => onChange(o.value)}
+            title={o.title}
             aria-pressed={on}
             className={`segment__item${on ? ' segment__item--selected' : ''}`}
           >
@@ -115,14 +117,17 @@ function Banner({
   );
 }
 
-/** 목록에서 선택된 항목 아래에 붙는 시안 전환 줄. */
+/**
+ * 목록에서 선택된 항목 아래에 붙는 시안 전환 줄.
+ * A·B는 동시에 고를 수 없는 선택지라 Segment 를 쓴다 — 머리말의 PC/모바일과 같은 컨트롤이다.
+ */
 function VariantRow({
   caption, options, selected, onSelect, href, hrefTitle, hrefLabel,
 }: {
   caption: string;
   /** key는 선택 식별용, label은 화면에 찍히는 글자(A·B)다. */
   options: { key: string; label?: string; title?: string }[];
-  selected?: string;
+  selected: string;
   onSelect: (key: string) => void;
   href: string;
   hrefTitle: string;
@@ -131,21 +136,16 @@ function VariantRow({
   return (
     <div className="rail__variants">
       <span className="rail__variants-caption">{caption}</span>
-      {options.map(o => {
-        const on = o.key === selected;
-        return (
-          <button
-            key={o.key}
-            onClick={() => onSelect(o.key)}
-            title={o.title}
-            aria-pressed={on}
-            className={`badge ${on ? 'badge--fill badge--brand' : 'badge--line badge--brand'}`}
-            style={{ cursor: on ? 'default' : 'pointer' }}
-          >
-            {(o.label ?? o.key).toUpperCase()}
-          </button>
-        );
-      })}
+      <Segment
+        label={`${caption} 전환`}
+        value={selected}
+        onChange={onSelect}
+        options={options.map(o => ({
+          value: o.key,
+          label: (o.label ?? o.key).toUpperCase(),
+          title: o.title,
+        }))}
+      />
       <a
         href={href}
         target="_blank"
@@ -468,9 +468,12 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                 onClick={() => setShowPaused(v => !v)}
                 aria-pressed={showPaused}
                 title={showPaused ? '운영종료 시안 숨기기' : `운영종료 시안 ${pausedCount}개 보기`}
-                className={`badge rail__filter ${showPaused ? 'badge--fill badge--brand' : 'badge--line badge--neutral'}`}
+                /* 운영종료는 끝난 것이라 중립(회색) 계열을 쓴다 — 브랜드색은 "지금 쓰는 것"으로 읽힌다.
+                   보이는 중/숨긴 중은 면 채움과 눈 아이콘 두 가지로 가른다. */
+                className={`badge badge--neutral rail__filter ${showPaused ? 'badge--fill' : 'badge--line'}`}
                 style={{ marginLeft: 'auto' }}
               >
+                {showPaused ? <Eye className="ico-badge" /> : <EyeOff className="ico-badge" />}
                 운영종료 {pausedCount}
               </button>
             )}

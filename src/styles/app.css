@@ -271,7 +271,7 @@ body {
   box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-neutral-subtle),
               0 0 0 var(--stroke-lg) var(--color-action-neutral-hover);
 }
-.rail__filter.badge--fill:hover { box-shadow: 0 0 0 var(--stroke-lg) var(--color-action-brand-hover); }
+.rail__filter.badge--fill:hover { box-shadow: 0 0 0 var(--stroke-lg) var(--color-action-neutral-hover); }
 
 /* ── 미리보기 무대 ───────────────────────── */
 /* 네이버 메일 창을 올려 두는 바닥. 창 자체는 이 규칙 밖이다 */
