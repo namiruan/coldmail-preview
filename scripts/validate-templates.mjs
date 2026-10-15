@@ -55,6 +55,29 @@ for (const t of templates) {
   }
 }
 
+// 같은 그룹·이름은 한 항목으로 묶여 "시안 A B" 토글이 된다.
+// 시안 키가 겹치거나 상태가 엇갈리면 목록에서 어느 쪽을 보여줄지 모호해진다.
+const entries = new Map();
+for (const t of templates) {
+  const key = `${t.category}\u0000${t.group}\u0000${t.label}`;
+  if (!entries.has(key)) entries.set(key, []);
+  entries.get(key).push(t);
+}
+for (const [key, group] of entries) {
+  if (group.length < 2) continue;
+  const where = `${group[0].group} / ${group[0].label}`;
+  const keys = group.map(t => t.variant);
+  if (keys.some(k => !k)) {
+    fail(where, `시안이 ${group.length}개인데 "시안" 칸이 비어 있습니다 (A·B 처럼 적습니다)`);
+  } else if (new Set(keys).size !== keys.length) {
+    fail(where, `시안 키가 중복입니다: ${keys.join(', ')}`);
+  }
+  const statuses = [...new Set(group.map(t => t.status))];
+  if (statuses.length > 1) {
+    fail(where, `시안끼리 상태가 다릅니다 (${statuses.map(x => STATUS_TO_KO[x]).join(', ')}) — 같은 항목은 상태를 맞춥니다`);
+  }
+}
+
 for (const f of htmlFiles) {
   if (!usedFiles.has(f)) fail('(고아 파일)', `templates/${f} 이 "## 시안" 표에 없습니다`);
 }

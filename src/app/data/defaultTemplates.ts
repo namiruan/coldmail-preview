@@ -18,8 +18,13 @@ export interface EmailTemplate {
   category: string;
   /** 시안 목록에서 묶이는 단위. 같은 group끼리 한 묶음으로 보인다. */
   group: string;
-  /** 묶음 안에서의 이름. 예: "단일홍보 A안" */
+  /** 묶음 안에서의 이름. 예: "단일홍보" */
   label: string;
+  /**
+   * 본문이 다른 A/B의 키. 같은 group·label의 시안끼리 한 항목으로 묶이고
+   * 목록에서 `시안 A B` 토글로 전환된다. 변형이 없으면 undefined.
+   */
+  variant?: string;
   /** manifest가 원본이다. 내보낼 때 HTML의 utm_* 를 이 값으로 맞춘다. 없으면 HTML을 그대로 둔다. */
   utm?: Utm;
   /** 제목 변형. 2개 이상이면 미리보기에 전환 UI가 뜬다. 없으면 HTML의 <title>을 쓴다. */
@@ -74,7 +79,7 @@ if (parsed.errors.length) {
 
 interface RawTemplate {
   id: string; name: string; category: string; group: string; label: string; file: string;
-  status: TemplateStatus; utm?: Utm; subjects?: SubjectVariant[];
+  status: TemplateStatus; variant?: string; utm?: Utm; subjects?: SubjectVariant[];
 }
 
 export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
@@ -87,6 +92,7 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
   group: t.group,
   label: t.label,
   status: t.status,
+  variant: t.variant,
   utm: t.utm,
   subjects: t.subjects,
 }));

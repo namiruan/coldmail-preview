@@ -83,6 +83,7 @@ export function parseTemplatesDoc(md) {
       name: `${clean(r['그룹'])} ${clean(r['이름'])}`.trim(),
       file: clean(r['파일']),
       status: status ?? 'active',
+      variant: orUndef(r['시안']),
       utm: Object.keys(utm).length ? utm : undefined,
       subjects: subjectsById.get(id),
     };

@@ -5,17 +5,20 @@
 
 ## 시안
 
-| ID | 분류 | 그룹 | 이름 | 파일 | 상태 | source | medium | campaign | content |
-|------|------|------|------|------|------|------|------|------|------|
-| 01 | 콜드메일 | 안면인식서비스 | 단일홍보 A안 | 01-face-promo-a.html | 사용중 | kbz_mail | email | face_2026 | mail-a |
-| 02 | 콜드메일 | 안면인식서비스 | 단일홍보 B안 | 02-face-promo-b.html | 사용중 | kbz_mail | email | face_2026 | mail-b |
-| 08 | 콜드메일 | 퇴직공제 | 26.04.02~26.04.06 | 08-premium-title-ab.html | 운영종료 | coldmail | email | title_ab | - |
-| 04 | 콜드메일 | 퇴직공제 | 26.04.07~26.06.18 | 04-severance-agency.html | 운영종료 | coldmail | email | - | - |
-| 09 | 콜드메일 | 퇴직공제 | 26.06.23~ | 09-face-section-ab.html | 사용중 | coldmail | email | - | - |
-| 05 | 발신템플릿 | 홈페이지용 | 가이드북 메일 전송 | 05-guidebook.html | 사용중 | guidebook | email | - | - |
-| 06 | 발신템플릿 | 인트라넷용 | 최종 계약서 | 06-quote.html | 사용중 | - | - | - | - |
-| 07 | 발신템플릿 | 홈페이지용 | 예상 견적서 | 07-quote-estimate.html | 사용중 | - | - | - | - |
+| ID | 분류 | 그룹 | 이름 | 시안 | 파일 | 상태 | source | medium | campaign | content |
+|------|------|------|------|------|------|------|------|------|------|------|
+| 01 | 콜드메일 | 안면인식서비스 | 단일홍보 | A | 01-face-promo-a.html | 사용중 | kbz_mail | email | face_2026 | mail-a |
+| 02 | 콜드메일 | 안면인식서비스 | 단일홍보 | B | 02-face-promo-b.html | 사용중 | kbz_mail | email | face_2026 | mail-b |
+| 08 | 콜드메일 | 퇴직공제 | 26.04.02~26.04.06 | - | 08-premium-title-ab.html | 운영종료 | coldmail | email | title_ab | - |
+| 04 | 콜드메일 | 퇴직공제 | 26.04.07~26.06.18 | - | 04-severance-agency.html | 운영종료 | coldmail | email | - | - |
+| 09 | 콜드메일 | 퇴직공제 | 26.06.23~ | - | 09-face-section-ab.html | 사용중 | coldmail | email | - | - |
+| 05 | 발신템플릿 | 홈페이지용 | 가이드북 메일 전송 | - | 05-guidebook.html | 사용중 | guidebook | email | - | - |
+| 06 | 발신템플릿 | 인트라넷용 | 최종 계약서 | - | 06-quote.html | 사용중 | - | - | - | - |
+| 07 | 발신템플릿 | 홈페이지용 | 예상 견적서 | - | 07-quote-estimate.html | 사용중 | - | - | - | - |
 
+- **시안** — 본문이 다른 A/B. 같은 그룹·이름의 줄이 여럿이면 한 항목으로 묶이고
+  `시안 A B` 토글이 생깁니다. 변형이 없으면 `-` 로 둡니다.
+  (제목만 다른 A/B는 아래 `## 제목 변형` 표를 씁니다)
 - **분류** — `콜드메일` 은 먼저 보내는 영업 메일이라 제목 A/B 대상입니다.
   `발신템플릿` 은 요청에 응답해 보내는 메일이라 테스트하지 않습니다.
 - **그룹** — 이름이 같으면 표에서 떨어져 있어도 한 묶음으로 보입니다.

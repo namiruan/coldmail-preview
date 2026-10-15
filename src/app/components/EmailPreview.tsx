@@ -33,6 +33,61 @@ const STATUS_DOT = {
 
 const STATUS_LABEL = { active: '사용중', draft: '미사용', ended: '운영종료' } as const;
 
+/** 목록에서 선택된 항목 아래에 붙는 전환 줄. 시안 A/B와 제목 A/B가 같은 모양을 쓴다. */
+function VariantRow({
+  caption, options, selected, onSelect, isDark, href, hrefTitle, hrefLabel,
+}: {
+  caption: string;
+  options: { key: string; title?: string }[];
+  selected?: string;
+  onSelect: (key: string) => void;
+  isDark: boolean;
+  href: string;
+  hrefTitle: string;
+  hrefLabel: string;
+}) {
+  const bg = isDark ? '#15202e' : '#f8fbff';
+  return (
+    <div
+      className="group/sub relative w-full flex items-center gap-1 pl-7 pr-8 py-1.5"
+      style={{ background: bg, ['--row-bg' as string]: bg } as React.CSSProperties}
+    >
+      <span className="text-[11px] shrink-0" style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>
+        {caption}
+      </span>
+      {options.map(o => {
+        const on = o.key === selected;
+        return (
+          <button
+            key={o.key}
+            onClick={() => onSelect(o.key)}
+            title={o.title}
+            aria-pressed={on}
+            className="px-2 py-0.5 rounded text-[11px] font-medium transition-all"
+            style={{
+              background: on ? (isDark ? '#2d4a6b' : '#dbeafe') : 'transparent',
+              color: on ? (isDark ? '#bfdbfe' : '#1d4ed8') : (isDark ? '#6b7280' : '#9ca3af'),
+            }}
+          >
+            {o.key.toUpperCase()}
+          </button>
+        );
+      })}
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={hrefTitle}
+        aria-label={hrefLabel}
+        className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover/sub:opacity-100 focus:opacity-100 focus:outline-none"
+        style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
+      >
+        <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
+      </a>
+    </div>
+  );
+}
+
 /**
  * 상태별 표시 규칙. 운영종료는 끝난 것이라 목록에서 숨기지만,
  * 미사용은 띄우기 전에 검토할 대상이라 그대로 보여준다.
@@ -251,17 +306,19 @@ export function EmailPreview() {
   );
 
   /**
-   * 분류 → 그룹 → 시안 세 층으로 묶는다.
-   * 이름이 같으면 표에서 떨어져 있어도 한 묶음으로 본다. 붙어 있는 줄만
-   * 묶으면 ID 순서상 사이에 다른 것이 끼었을 때 같은 이름이 둘로 갈린다.
-   * 자리는 처음 나온 위치, 안쪽 순서는 표의 순서를 따른다.
+   * 분류 → 그룹 → 항목 → 시안 으로 묶는다.
+   * 본문이 다른 A/B(같은 group·label)는 한 항목으로 합쳐 토글로 전환한다.
+   * 이름이 같으면 표에서 떨어져 있어도 한 묶음으로 본다. 자리는 처음 나온
+   * 위치, 안쪽 순서는 표의 순서를 따른다.
    */
   const sections = useMemo(() => {
-    type Group = { name: string; items: typeof templates };
+    type Entry = { label: string; variants: typeof templates };
+    type Group = { name: string; entries: Entry[] };
     type Section = { name: string; groups: Group[] };
     const out: Section[] = [];
     const byCat = new Map<string, Section>();
     const byGroup = new Map<string, Group>();
+    const byEntry = new Map<string, Entry>();
     const visible = templates.filter(
       t => showPaused || !STATUS_UI[t.status]?.hidden || t.id === activeId,
     );
@@ -272,14 +329,21 @@ export function EmailPreview() {
         byCat.set(t.category, sec);
         out.push(sec);
       }
-      const key = `${t.category}\u0000${t.group}`;
-      let g = byGroup.get(key);
+      const gKey = `${t.category}\u0000${t.group}`;
+      let g = byGroup.get(gKey);
       if (!g) {
-        g = { name: t.group, items: [] };
-        byGroup.set(key, g);
+        g = { name: t.group, entries: [] };
+        byGroup.set(gKey, g);
         sec.groups.push(g);
       }
-      g.items.push(t);
+      const eKey = `${gKey}\u0000${t.label}`;
+      let e = byEntry.get(eKey);
+      if (!e) {
+        e = { label: t.label, variants: [] };
+        byEntry.set(eKey, e);
+        g.entries.push(e);
+      }
+      e.variants.push(t);
     }
     return out;
   }, [templates, showPaused, activeId]);
@@ -537,13 +601,16 @@ export function EmailPreview() {
                       style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none' }}
                     />
                     <span className="text-[11px] font-semibold tracking-wide truncate">{g.name}</span>
-                    <span className="ml-auto text-[10px] tabular-nums opacity-60">{g.items.length}</span>
+                    <span className="ml-auto text-[10px] tabular-nums opacity-60">{g.entries.length}</span>
                   </button>
 
-                  {!isCollapsed && g.items.map((t) => {
-                    const isActive = t.id === activeId;
+                  {!isCollapsed && g.entries.map((entry) => {
+                    // 선택된 시안이 이 항목 안에 있으면 그걸, 아니면 첫 시안을 대표로 쓴다
+                    const shown = entry.variants.find(v => v.id === activeId) ?? entry.variants[0];
+                    const isActive = entry.variants.some(v => v.id === activeId);
+                    const hasBodyAB = entry.variants.length > 1;
                     return (
-                      <Fragment key={t.id}>
+                      <Fragment key={`${entry.label}-${entry.variants[0].id}`}>
                       <div
                         className="group relative w-full transition-colors"
                         style={{
@@ -564,8 +631,8 @@ export function EmailPreview() {
                         }}
                       >
                         <button
-                          onClick={() => setActiveId(t.id)}
-                          title={`${t.label} — ${STATUS_LABEL[t.status]}`}
+                          onClick={() => setActiveId(shown.id)}
+                          title={`${entry.label} — ${STATUS_LABEL[shown.status]}`}
                           className="w-full text-left pl-5 pr-4 py-2 flex items-center gap-2 transition-colors"
                           style={{
                             color: isActive
@@ -581,30 +648,30 @@ export function EmailPreview() {
                             style={{
                               width: 7,
                               height: 7,
-                              borderRadius: STATUS_DOT[t.status].shape === 'circle' ? '50%' : 1,
-                              background: STATUS_DOT[t.status].fill
-                                ? STATUS_DOT[t.status].tone(isDark)
+                              borderRadius: STATUS_DOT[shown.status].shape === 'circle' ? '50%' : 1,
+                              background: STATUS_DOT[shown.status].fill
+                                ? STATUS_DOT[shown.status].tone(isDark)
                                 : 'transparent',
-                              border: STATUS_DOT[t.status].fill
+                              border: STATUS_DOT[shown.status].fill
                                 ? 'none'
-                                : `1.5px solid ${STATUS_DOT[t.status].tone(isDark)}`,
+                                : `1.5px solid ${STATUS_DOT[shown.status].tone(isDark)}`,
                             }}
                           />
                           <span
                             className="text-xs min-w-0 truncate"
-                            style={{ opacity: STATUS_UI[t.status]?.dim ?? 1 }}
+                            style={{ opacity: STATUS_UI[shown.status]?.dim ?? 1 }}
                           >
-                            {t.label}
+                            {entry.label}
                           </span>
-                          <span className="sr-only">{STATUS_LABEL[t.status]}</span>
+                          <span className="sr-only">{STATUS_LABEL[shown.status]}</span>
                         </button>
                         {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다. */}
                         <a
-                          href={blobUrl(t.path)}
+                          href={blobUrl(shown.path)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          title={`GitHub에서 원본 열기 — ${t.path}`}
-                          aria-label={`${t.name} 원본 소스를 GitHub에서 열기`}
+                          title={`GitHub에서 원본 열기 — ${shown.path}`}
+                          aria-label={`${shown.name} 원본 소스를 GitHub에서 열기`}
                           className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none"
                           style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
                         >
@@ -612,45 +679,35 @@ export function EmailPreview() {
                         </a>
                       </div>
 
-                      {/* 제목 변형 — 선택된 시안에, 변형이 2개 이상일 때만 */}
-                      {isActive && (t.subjects?.length ?? 0) > 1 && (
-                        <div
-                          className="group/sub relative w-full flex items-center gap-1 pl-7 pr-8 py-1.5"
-                          style={{ background: isDark ? '#15202e' : '#f8fbff', ['--row-bg' as string]: isDark ? '#15202e' : '#f8fbff' } as React.CSSProperties}
-                        >
-                          <span className="text-[11px] shrink-0" style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>제목</span>
-                          {t.subjects!.map(v => {
-                            const on = v.key === variant?.key;
-                            return (
-                              <button
-                                key={v.key}
-                                onClick={() => setSubjectKey(v.key)}
-                                title={v.text}
-                                aria-pressed={on}
-                                className="px-2 py-0.5 rounded text-[11px] font-medium transition-all"
-                                style={{
-                                  background: on ? (isDark ? '#2d4a6b' : '#dbeafe') : 'transparent',
-                                  color: on
-                                    ? isDark ? '#bfdbfe' : '#1d4ed8'
-                                    : isDark ? '#6b7280' : '#9ca3af',
-                                }}
-                              >
-                                {v.key.toUpperCase()}
-                              </button>
-                            );
-                          })}
-                          <a
-                            href={blobUrl(DOC_PATH)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`GitHub에서 제목 원본 열기 — ${DOC_PATH}`}
-                            aria-label={`${t.name} 제목 변형을 GitHub에서 열기`}
-                            className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover/sub:opacity-100 focus:opacity-100 focus:outline-none"
-                            style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
-                          >
-                            <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
-                          </a>
-                        </div>
+                      {/* 본문 A/B — 시안마다 파일이 다르므로 원본은 해당 .html 로 간다 */}
+                      {isActive && hasBodyAB && (
+                        <VariantRow
+                          caption="시안"
+                          options={entry.variants.map(v => ({ key: v.variant ?? v.id, title: v.name }))}
+                          selected={shown.variant ?? shown.id}
+                          onSelect={key => {
+                            const next = entry.variants.find(v => (v.variant ?? v.id) === key);
+                            if (next) setActiveId(next.id);
+                          }}
+                          isDark={isDark}
+                          href={blobUrl(shown.path)}
+                          hrefTitle={`GitHub에서 본문 원본 열기 — ${shown.path}`}
+                          hrefLabel={`${shown.name} 본문 원본을 GitHub에서 열기`}
+                        />
+                      )}
+
+                      {/* 제목 A/B — 본문을 공유하므로 원본은 시안 문서로 간다 */}
+                      {isActive && (shown.subjects?.length ?? 0) > 1 && (
+                        <VariantRow
+                          caption="제목"
+                          options={shown.subjects!.map(v => ({ key: v.key, title: v.text }))}
+                          selected={variant?.key}
+                          onSelect={setSubjectKey}
+                          isDark={isDark}
+                          href={blobUrl(DOC_PATH)}
+                          hrefTitle={`GitHub에서 제목 원본 열기 — ${DOC_PATH}`}
+                          hrefLabel={`${shown.name} 제목 변형을 GitHub에서 열기`}
+                        />
                       )}
                       </Fragment>
                     );
