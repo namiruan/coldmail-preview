@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Check, Mail,
   ChevronDown, ChevronLeft, ChevronUp, Star,
-  MoreHorizontal, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings,
+  MoreHorizontal, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings, EyeOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES, type TemplateStatus } from '../data/defaultTemplates';
@@ -434,6 +434,19 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
         <div className="app__brand">
           <Mail className="ico-md" />
           <span className="app__title">김반장 메일 템플릿 디자인</span>
+          {/* 시안 관리 문서 — 그룹·상태·UTM이 여기서 결정된다.
+              결정이 아니라 참고 문서로 가는 길이라 Icon Button(중립, hover tint만).
+              머리말에서 면을 가진 것은 라이브 에디터 하나뿐이다. */}
+          <a
+            href={blobUrl(DOC_PATH)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="시안 관리 문서 열기 — 그룹·사용 상태·UTM을 여기서 고칩니다"
+            aria-label="시안 관리 문서를 GitHub에서 열기"
+            className="icon-on--md app__icon-link"
+          >
+            <Settings />
+          </a>
         </div>
 
         <div className="app__tools">
@@ -457,20 +470,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             ]}
           />
 
-          {/* 시안 관리 문서 — 그룹·상태·UTM이 여기서 결정된다.
-              결정이 아니라 참고 문서로 가는 길이라 Icon Button(중립, hover tint만).
-              머리말에서 면을 가진 것은 라이브 에디터 하나뿐이다. */}
-          <a
-            href={blobUrl(DOC_PATH)}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="시안 관리 문서 열기 — 그룹·사용 상태·UTM을 여기서 고칩니다"
-            aria-label="시안 관리 문서를 GitHub에서 열기"
-            className="icon-on--md app__icon-link"
-          >
-            <Settings />
-          </a>
-
           {/* 코드를 고치는 것이 이 화면의 핵심 작업이라 primary */}
           <button
             onClick={() => setEditorOpen(v => !v)}
@@ -490,11 +489,25 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
         <aside className="rail">
           {/* Template List — group별로 묶고, 그룹 제목을 눌러 접는다 */}
           <div className="rail__list">
+            {/* components/organisms/empty-state.md — 레일 안이라 compact */}
             {!visible.length && (
-              <p className="rail__empty">
-                아래 필터가 모두 꺼져 있어 보여 줄 시안이 없습니다.
-                하나를 켜면 그 상태의 시안이 다시 나옵니다.
-              </p>
+              <div className="empty-state empty-state--compact">
+                <div className="empty-state__icon" aria-hidden><EyeOff /></div>
+                <div className="empty-state__body">
+                  <p className="empty-state__title text-body">보여 줄 시안이 없습니다</p>
+                  <p className="empty-state__description text-body">
+                    아래 필터가 모두 꺼져 있습니다.
+                  </p>
+                </div>
+                <div className="empty-state__actions">
+                  <button
+                    onClick={() => setHidden(new Set())}
+                    className="btn btn--primary btn--xs text-button-sm"
+                  >
+                    전체 보기
+                  </button>
+                </div>
+              </div>
             )}
             {sections.map(sec => (
               <div key={sec.name} className="rail__block">

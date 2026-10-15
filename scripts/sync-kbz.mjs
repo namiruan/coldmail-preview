@@ -27,6 +27,7 @@ const COMPONENTS = [
   'design-system/components/atoms/segment.md',
   'design-system/components/atoms/tag.md',
   'design-system/components/molecules/banner.md',
+  'design-system/components/organisms/empty-state.md',
 ];
 
 const local = process.argv[2] ? resolve(process.argv[2]) : null;

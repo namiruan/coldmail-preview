@@ -112,8 +112,8 @@ src/
 자리가 같습니다 — 둘을 떼어 두면 같은 것을 두 곳에서 말하게 됩니다. 각 항목에
 그 상태의 개수가 붙어 있어, 꺼 둔 상태도 몇 개가 있는지는 보입니다.
 **필터는 말 그대로입니다** — 끈 상태의 시안은 지금 고른 것이라도 목록에서
-사라집니다(오른쪽 미리보기는 그대로 남습니다). 다 끄면 목록이 비고 왜 비었는지
-적어 둡니다. 아래 화살표와 `n / m` 도 **보이는 목록**을 걷습니다 — 가려진 시안으로
+사라집니다(오른쪽 미리보기는 그대로 남습니다). 다 끄면 `components/organisms/empty-state.md` 의 EmptyState 가 서서 왜 비었는지
+말하고 `전체 보기` 로 되돌립니다(레일 안이라 `--compact`). 아래 화살표와 `n / m` 도 **보이는 목록**을 걷습니다 — 가려진 시안으로
 데려가지 않습니다.
 
 필터 칩은 `components/atoms/tag.md` 의 selectable Tag 입니다("필터 선택·해제 →
@@ -189,7 +189,8 @@ node scripts/sync-kbz.mjs ../kbz_3.0_ui_stytem   # 로컬 체크아웃에서 받
 | `src/styles/kbz/tokens.css` | 토큰 번들 **원본 그대로** |
 | `src/styles/kbz/components.css` | 쓰는 컴포넌트의 CSS만. 각 스펙 문서의 ` ```css ` 블록에서 뽑습니다 |
 
-쓰는 컴포넌트는 Button · Badge · Tag · Segment · Banner · Toast · Icon Button 입니다.
+쓰는 컴포넌트는 Button · Badge · Tag · Segment · Banner · Toast · EmptyState ·
+Icon Button 입니다.
 (Icon Button은 `utilities/icon.css` 가 토큰 번들에 함께 들어와 따로 받지 않습니다.)
 늘어나면 `scripts/sync-kbz.mjs` 의 `COMPONENTS` 목록에 적고 다시 받습니다.
 

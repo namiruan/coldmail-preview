@@ -470,3 +470,68 @@ button.tag:not(.tag--selected):hover {
 .banner--error .banner__action-link {
   color: var(--color-text-error);
 }
+
+/* ══ design-system/components/organisms/empty-state.md ══ */
+/* ── Base ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-stack-md);
+  padding: var(--space-inset-3xl);
+}
+
+/* ── Icon ── */
+/* EmptyState 전용 원형 일러스트 컨테이너 — 64px 고정(의미 토큰 없음) */
+.empty-state__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%; /* 원형 — radius 토큰으로 대체 불가 */
+  background: var(--color-action-neutral-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.empty-state__icon svg {
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+  /* 서비스 아이콘(자체 색상 변수)·currentColor 아이콘 모두 무채색·반투명 처리 */
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+/* ── Body (제목 + 설명 묶음) ── */
+.empty-state__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-stack-xs);
+}
+
+/* ── Title ── */
+.empty-state__title {
+  margin: 0;
+  color: var(--color-text-body);
+}
+
+/* ── Description ── */
+.empty-state__description {
+  margin: 0;
+  color: var(--color-text-subtle);
+  max-width: 360px;
+}
+
+/* ── Actions ── */
+.empty-state__actions {
+  display: flex;
+  gap: var(--space-gap-xs);
+  justify-content: center;
+}
+
+/* ── Compact ── */
+.empty-state--compact {
+  padding: var(--space-inset-2xl);
+  gap: var(--space-stack-sm);
+}

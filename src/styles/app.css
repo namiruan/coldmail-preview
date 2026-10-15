@@ -55,6 +55,8 @@ body {
   gap: var(--space-gap-sm);
   color: var(--color-text-brand-vivid);
 }
+/* 설정은 제목에 딸린 것이라 조금 더 붙인다 — 도구 묶음과 같은 간격이면 떨어져 보인다 */
+.app__brand .app__icon-link { margin-left: var(--space-2); }
 .app__title {
   font-size: var(--font-size-h4);
   font-weight: var(--font-weight-heading);
@@ -133,15 +135,9 @@ body {
   overflow-y: auto;
   padding-inline: var(--space-8);
 }
-/* 필터를 다 끄면 목록이 빈다 — 왜 비었는지 말해 준다 */
-.rail__empty {
-  margin: 0;
-  padding: var(--space-inset-2xl) var(--space-inset-xl);
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-reading);
-  color: var(--color-text-subtle);
-  word-break: keep-all;
-}
+/* 필터를 다 끄면 EmptyState 가 선다. 레일이 좁아 글줄과 아이콘만 한 칸 줄인다 */
+.rail__list .empty-state__description { word-break: keep-all; }
+.rail__list .empty-state__icon { width: 48px; height: 48px; }
 
 /* 대분류 — 콜드메일 / 발신템플릿
    **1단계는 구역이다.** 여백만으로 나누면 어디서 끝났는지가 흐려진다. 선을 그어
