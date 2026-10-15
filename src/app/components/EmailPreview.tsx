@@ -503,9 +503,11 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                         aria-expanded={!isCollapsed}
                         title={isCollapsed ? `${g.name} 펼치기` : `${g.name} 접기`}
                       >
-                        <ChevronDown
-                          className={`ico-badge shrink-0 rail__chevron${isCollapsed ? ' rail__chevron--collapsed' : ''}`}
-                        />
+                        <span aria-hidden className="rail__group-toggle">
+                          <ChevronDown
+                            className={`ico-badge rail__chevron${isCollapsed ? ' rail__chevron--collapsed' : ''}`}
+                          />
+                        </span>
                         <span className="rail__group-name">{g.name}</span>
                         <span className="rail__group-count badge badge--brand badge--pill badge--line">
                           {g.entries.length}
