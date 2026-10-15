@@ -4,7 +4,10 @@ import { parseTemplatesDoc } from './parseTemplatesDoc.js';
 import type { Utm } from './utm';
 
 export interface EmailTemplate {
+  /** 캠페인 번호. A/B 묶음은 같은 값을 공유한다 — 선택 상태의 키로는 쓸 수 없다. */
   id: string;
+  /** 줄마다 고유한 선택 키. id + 시안(08a, 08b, 01 …) — 파일명 앞머리와 같다. */
+  key: string;
   name: string;
   html: string;
   /** 현재 모든 템플릿이 빈 값이다. 스타일은 html 안의 <style>·인라인으로 들어있다. */
@@ -27,10 +30,8 @@ export interface EmailTemplate {
   variant?: string;
   /** manifest가 원본이다. 내보낼 때 HTML의 utm_* 를 이 값으로 맞춘다. 없으면 HTML을 그대로 둔다. */
   utm?: Utm;
-  /** 제목 변형. 2개 이상이면 미리보기에 전환 UI가 뜬다. 없으면 HTML의 <title>을 쓴다. */
-  subjects?: SubjectVariant[];
   /**
-   * 사용 상태. 어느 값이든 utm·subjects 설정은 그대로 남는다.
+   * 사용 상태. 어느 값이든 utm 설정은 그대로 남는다.
    *   active = 쓰는 중 · draft = 시안은 있으나 아직 쓰기 전 · ended = 집행을 마침
    */
   status: TemplateStatus;
@@ -38,16 +39,6 @@ export interface EmailTemplate {
 
 export type TemplateStatus = 'active' | 'draft' | 'ended';
 
-export interface SubjectVariant {
-  /** 변형 식별자. utm_term 기본값으로도 쓰인다. */
-  key: string;
-  /** 메일 제목 */
-  text: string;
-  /** utm_term 을 따로 지정할 때. 생략하면 `subj-{key}` */
-  term?: string;
-  /** 이 변형만 utm_content 를 덮어쓸 때. 제목 A/B를 content로 가르던 방식을 위한 것. */
-  content?: string;
-}
 
 /**
  * templates/*.html 을 빌드 시점에 문자열로 가져온다.
@@ -79,11 +70,12 @@ if (parsed.errors.length) {
 
 interface RawTemplate {
   id: string; name: string; category: string; group: string; label: string; file: string;
-  status: TemplateStatus; variant?: string; utm?: Utm; subjects?: SubjectVariant[];
+  status: TemplateStatus; variant?: string; utm?: Utm;
 }
 
 export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
   id: t.id,
+  key: t.id + (t.variant ? t.variant.toLowerCase() : ''),
   name: t.name,
   html: read(t.file),
   css: '',
@@ -94,8 +86,5 @@ export const DEFAULT_TEMPLATES: EmailTemplate[] = parsed.templates.map(t => ({
   status: t.status,
   variant: t.variant,
   utm: t.utm,
-  subjects: t.subjects,
 }));
 
-/** 변형의 utm_term 값. 따로 적지 않았으면 key에서 만든다. */
-export const subjectTerm = (v: SubjectVariant) => v.term ?? `subj-${v.key}`;

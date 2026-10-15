@@ -7,14 +7,13 @@ import { parseTemplatesDoc, STATUS_TO_KO } from '../src/app/data/parseTemplatesD
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = join(ROOT, 'templates');
-const DOC = join(DIR, 'README.md');
 
 const errors = [];
 const fail = (where, msg) => errors.push(`${where}: ${msg}`);
 
 let md;
 try {
-  md = readFileSync(DOC, 'utf8');
+  md = readFileSync(join(DIR, 'README.md'), 'utf8');
 } catch (e) {
   console.error(`✗ templates/README.md 를 읽을 수 없습니다 — ${e.message}`);
   process.exit(1);
@@ -28,49 +27,56 @@ if (!templates.length) {
 }
 
 const htmlFiles = readdirSync(DIR).filter(f => f.endsWith('.html'));
-const seenIds = new Set();
+const seen = new Set();
 const usedFiles = new Set();
 
 for (const t of templates) {
   const where = `${t.id || '(ID 없음)'} ${t.name}`.trim();
+
   for (const [key, ko] of [['id', 'ID'], ['category', '분류'], ['group', '그룹'], ['label', '이름'], ['file', '파일']]) {
     if (!t[key]) fail(where, `"${ko}" 칸이 비어 있습니다`);
   }
+
+  // A/B 묶음은 ID를 공유한다. 시안 키까지 합쳐야 고유하다.
   if (t.id) {
-    if (seenIds.has(t.id)) fail(where, `ID "${t.id}" 가 중복입니다`);
-    seenIds.add(t.id);
+    const key = `${t.id}\u0000${t.variant ?? ''}`;
+    if (seen.has(key)) {
+      fail(where, t.variant
+        ? `ID "${t.id}" 의 시안 "${t.variant}" 가 중복입니다`
+        : `ID "${t.id}" 가 중복입니다 (A/B면 "시안" 칸을 채웁니다)`);
+    }
+    seen.add(key);
   }
+
   if (t.file) {
     usedFiles.add(t.file);
     if (!htmlFiles.includes(t.file)) fail(where, `templates/${t.file} 파일이 없습니다`);
   }
-  if (t.subjects) {
-    const keys = new Set();
-    t.subjects.forEach((v, j) => {
-      if (!v.key) fail(where, `제목 변형 ${j + 1}번째: "키" 가 비어 있습니다`);
-      else if (keys.has(v.key)) fail(where, `제목 변형의 키 "${v.key}" 가 중복입니다`);
-      else keys.add(v.key);
-      if (!v.text) fail(where, `제목 변형 "${v.key}": "제목" 이 비어 있습니다`);
-    });
+
+  // 문서가 두 겹이면 메일 클라이언트마다 어느 <head>를 살릴지 갈려 렌더가 달라진다.
+  // 브라우저는 너그러워 미리보기만으로는 드러나지 않으므로 여기서 막는다.
+  if (t.file && htmlFiles.includes(t.file)) {
+    const html = readFileSync(join(DIR, t.file), 'utf8');
+    for (const [re, ko] of [[/<!DOCTYPE/gi, 'DOCTYPE'], [/<html[\s>]/gi, '<html>'], [/<body[\s>]/gi, '<body>']]) {
+      const n = (html.match(re) || []).length;
+      if (n > 1) fail(where, `${t.file}: ${ko} 가 ${n}개입니다 — 문서는 한 겹이어야 합니다`);
+    }
   }
 }
 
 // 같은 그룹·이름은 한 항목으로 묶여 "시안 A B" 토글이 된다.
-// 시안 키가 겹치거나 상태가 엇갈리면 목록에서 어느 쪽을 보여줄지 모호해진다.
 const entries = new Map();
 for (const t of templates) {
   const key = `${t.category}\u0000${t.group}\u0000${t.label}`;
   if (!entries.has(key)) entries.set(key, []);
   entries.get(key).push(t);
 }
-for (const [key, group] of entries) {
+for (const [, group] of entries) {
   if (group.length < 2) continue;
   const where = `${group[0].group} / ${group[0].label}`;
   const keys = group.map(t => t.variant);
   if (keys.some(k => !k)) {
     fail(where, `시안이 ${group.length}개인데 "시안" 칸이 비어 있습니다 (A·B 처럼 적습니다)`);
-  } else if (new Set(keys).size !== keys.length) {
-    fail(where, `시안 키가 중복입니다: ${keys.join(', ')}`);
   }
   const statuses = [...new Set(group.map(t => t.status))];
   if (statuses.length > 1) {
@@ -78,30 +84,22 @@ for (const [key, group] of entries) {
   }
 }
 
-// 문서가 두 겹이면 메일 클라이언트마다 어느 <head>를 살릴지 갈려 렌더가 달라진다.
-// 브라우저는 너그러워 미리보기만으로는 드러나지 않으므로 여기서 막는다.
+// 문서에 적은 UTM은 파일 안 링크와 같아야 한다. 어긋나면 어느 쪽이 맞는지 알 수 없다.
 for (const t of templates) {
-  if (!t.file || !htmlFiles.includes(t.file)) continue;
+  if (!t.utm || !t.file || !htmlFiles.includes(t.file)) continue;
   const html = readFileSync(join(DIR, t.file), 'utf8');
-  const where = `${t.group} / ${t.label}`;
-  for (const [re, ko] of [[/<!DOCTYPE/gi, 'DOCTYPE'], [/<html[\s>]/gi, '<html>'], [/<body[\s>]/gi, '<body>']]) {
-    const n = (html.match(re) || []).length;
-    if (n > 1) fail(where, `${t.file}: ${ko} 가 ${n}개입니다 — 문서는 한 겹이어야 합니다`);
+  const where = `${t.id} ${t.label}`;
+  for (const [k, v] of Object.entries(t.utm)) {
+    const found = [...new Set([...html.matchAll(new RegExp(`utm_${k}=([^&"']*)`, 'g'))].map(m => m[1]))];
+    if (!found.length) fail(where, `${t.file} 에 utm_${k} 가 없는데 문서에는 "${v}" 로 적혀 있습니다`);
+    else if (found.length > 1 || found[0] !== v) {
+      fail(where, `utm_${k}: 문서 "${v}" ↔ 파일 "${found.join(', ')}" — 값이 다릅니다 (링크마다 갈리면 문서는 "-" 로 비웁니다)`);
+    }
   }
 }
 
 for (const f of htmlFiles) {
   if (!usedFiles.has(f)) fail('(고아 파일)', `templates/${f} 이 "## 시안" 표에 없습니다`);
-}
-
-// 표에만 있고 실제 시안이 없는 제목 변형
-const subjectIds = new Set();
-for (const line of md.split('\n')) {
-  const m = line.match(/^\|\s*(\d{2})\s*\|\s*\w+\s*\|/);
-  if (m) subjectIds.add(m[1]);
-}
-for (const id of subjectIds) {
-  if (!seenIds.has(id)) fail('(제목 변형)', `ID "${id}" 는 "## 시안" 표에 없습니다`);
 }
 
 if (errors.length) {
@@ -110,10 +108,24 @@ if (errors.length) {
   console.error('\n  templates/README.md 를 고치고 다시 커밋하세요.');
   process.exit(1);
 }
+
+// A/B 묶음의 본문이 같은지 알린다. 제목만 다른 A/B에서 한쪽만 고치면 여기서 드러난다.
+// 본문이 다른 A/B(예: 단일홍보)는 원래 다르므로 막지 않고 알리기만 한다.
+const strip = f => readFileSync(join(DIR, f), 'utf8')
+  .replace(/<title[^>]*>[^<]*<\/title>/gi, '')
+  .replace(/utm_[a-z]+=[^&"']*/g, '')
+  .replace(/\s+/g, ' ').trim();
+const abNotes = [];
+for (const [, group] of entries) {
+  if (group.length < 2 || !group.every(t => htmlFiles.includes(t.file))) continue;
+  const same = new Set(group.map(t => strip(t.file))).size === 1;
+  abNotes.push(`${group[0].label} ${same ? '제목만 다름' : '본문도 다름'}`);
+}
+
 const counts = Object.entries(STATUS_TO_KO)
   .map(([k, ko]) => `${ko} ${templates.filter(t => t.status === k).length}`)
   .join(' · ');
 const cats = [...new Set(templates.map(t => t.category))];
 console.log(`✓ 시안 문서 정상 — ${templates.length}개 (${counts})`);
-// 오타로 분류가 하나 더 생기면 여기서 눈에 띈다.
 console.log(`  분류: ${cats.map(c => `${c} ${templates.filter(t => t.category === c).length}`).join(' · ')}`);
+if (abNotes.length) console.log(`  A/B: ${abNotes.join(' · ')}`);

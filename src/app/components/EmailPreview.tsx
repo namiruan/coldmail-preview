@@ -1,15 +1,13 @@
 import { useState, useCallback, useEffect, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Monitor, Smartphone, Copy, Check, Mail,
-  ChevronDown, ChevronLeft, ChevronUp, ChevronRight, Star,
-  MoreHorizontal, Code, X, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings,
+  Monitor, Smartphone, Check, Mail,
+  ChevronDown, ChevronLeft, ChevronUp, Star,
+  MoreHorizontal, Sun, Moon, AlertTriangle, Code2, FileCode2, Settings,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
 import { blobUrl, DOC_PATH } from '../data/repo';
-import { subjectTerm } from '../data/defaultTemplates';
-import { applyUtm } from '../data/utm';
 import { EditorPanel } from './EditorPanel';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { editUrl } from '../data/repo';
@@ -36,12 +34,13 @@ const STATUS_DOT = {
 
 const STATUS_LABEL = { active: '사용중', draft: '미사용', ended: '운영종료' } as const;
 
-/** 목록에서 선택된 항목 아래에 붙는 전환 줄. 시안 A/B와 제목 A/B가 같은 모양을 쓴다. */
+/** 목록에서 선택된 항목 아래에 붙는 시안 전환 줄. */
 function VariantRow({
   caption, options, selected, onSelect, isDark, href, hrefTitle, hrefLabel,
 }: {
   caption: string;
-  options: { key: string; title?: string }[];
+  /** key는 선택 식별용, label은 화면에 찍히는 글자(A·B)다. */
+  options: { key: string; label?: string; title?: string }[];
   selected?: string;
   onSelect: (key: string) => void;
   isDark: boolean;
@@ -72,7 +71,7 @@ function VariantRow({
               color: on ? (isDark ? '#bfdbfe' : '#1d4ed8') : (isDark ? '#6b7280' : '#9ca3af'),
             }}
           >
-            {o.key.toUpperCase()}
+            {(o.label ?? o.key).toUpperCase()}
           </button>
         );
       })}
@@ -227,78 +226,16 @@ function DarkModeBanner({ isDark, isFixed }: { isDark: boolean; isFixed: boolean
   );
 }
 
-/* ── Code Modal ── */
-function CodeModal({
-  templateName,
-  fullHtml,
-  onClose,
-}: {
-  templateName: string;
-  fullHtml: string;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(fullHtml);
-      setCopied(true);
-      toast.success('코드가 클립보드에 복사되었습니다!');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('복사에 실패했습니다.');
-    }
-  }, [fullHtml]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
-          <div className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-gray-500" />
-            <span className="font-semibold text-gray-800">{templateName} — 전체 코드</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleCopy}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                copied ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? '복사됨' : '코드 복사'}
-            </button>
-            <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-        <div className="flex-1 overflow-auto bg-[#1e1e2e] p-5">
-          <pre className="text-[13px] text-[#cdd6f4] font-mono leading-relaxed whitespace-pre-wrap break-all">{fullHtml}</pre>
-        </div>
-        <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between shrink-0">
-          <span className="text-xs text-gray-400">{fullHtml.length.toLocaleString()} 자</span>
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700 transition-colors">닫기</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ══════════════════════════════════════════
    Main Component
 ══════════════════════════════════════════ */
 export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?: boolean } = {}) {
   const templates = DEFAULT_TEMPLATES;
   const navigate = useNavigate();
-  const [activeId, setActiveId] = useState(templates[0]?.id ?? '01');
+  // A/B 묶음은 id를 공유하므로 선택 상태는 줄마다 고유한 key로 잡는다.
+  const [activeKey, setActiveKey] = useState(templates[0]?.key ?? '01');
   const [device, setDevice] = useState<DeviceMode>('desktop');
   const [darkMode, setDarkMode] = useState(false);
-  const [codeModalOpen, setCodeModalOpen] = useState(false);
 
   const [showPaused, setShowPaused] = useState<boolean>(() => {
     try { return localStorage.getItem('coldmail:showPaused') === '1'; } catch { return false; }
@@ -327,7 +264,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
     const byGroup = new Map<string, Group>();
     const byEntry = new Map<string, Entry>();
     const visible = templates.filter(
-      t => showPaused || !STATUS_UI[t.status]?.hidden || t.id === activeId,
+      t => showPaused || !STATUS_UI[t.status]?.hidden || t.key === activeKey,
     );
     for (const t of visible) {
       let sec = byCat.get(t.category);
@@ -353,9 +290,8 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
       e.variants.push(t);
     }
     return out;
-  }, [templates, showPaused, activeId]);
+  }, [templates, showPaused, activeKey]);
 
-  const [subjectKey, setSubjectKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(initialEditorOpen);
   /** 편집 중인 코드. null이면 파일 원본 그대로. */
   const [draft, setDraft] = useState<string | null>(null);
@@ -368,43 +304,20 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
     });
   }, []);
 
-  const current = templates.find(t => t.id === activeId) ?? templates[0];
+  const current = templates.find(t => t.key === activeKey) ?? templates[0];
 
   /** 편집 중이면 편집본을, 아니면 파일 원본을 쓴다. */
   const sourceHtml = draft ?? current.html;
 
-  const currentIndex = templates.findIndex(t => t.id === activeId);
-  // 제목은 manifest가 원본이다. subjects가 없으면 예전처럼 <title>에서 읽는다.
-  const variants = current.subjects ?? [];
-  const variant = variants.find(v => v.key === subjectKey) ?? variants[0];
-  const subject = variant?.text ?? getSubject(sourceHtml);
+  const currentIndex = templates.findIndex(t => t.key === activeKey);
+  const subject = getSubject(sourceHtml);
 
-  // 내보내는 HTML: 선택한 변형의 제목과 UTM을 반영한다.
-  const exportHtml = useMemo(() => {
-    let html = sourceHtml;
-    if (variant) {
-      const title = variant.text.replace(/[<>]/g, '');
-      if (/<title[^>]*>[^<]*<\/title>/i.test(html)) {
-        html = html.replace(/<title([^>]*)>[^<]*<\/title>/i, `<title$1>${title}</title>`);
-      } else {
-        // <title>이 없는 템플릿도 있다. 그대로 두면 메일 제목이 비므로 head에 넣어 준다.
-        html = html.replace(/<\/head>/i, `  <title>${title}</title>\n</head>`);
-      }
-    }
-    if (!current.utm) return applyUtm(html, undefined);
-    if (!variant) return applyUtm(html, current.utm);
-    return applyUtm(html, {
-      ...current.utm,
-      ...(variants.length > 1 && !variant.content ? { term: subjectTerm(variant) } : {}),
-      ...(variant.content ? { content: variant.content } : {}),
-    });
-  }, [sourceHtml, current.utm, variant, variants.length]);
-  useEffect(() => { setSubjectKey(null); setDraft(null); }, [activeId]);
+  useEffect(() => { setDraft(null); }, [activeKey]);
 
   useEffect(() => {
-    const g = templates.find(t => t.id === activeId)?.group;
+    const g = templates.find(t => t.key === activeKey)?.group;
     if (g) setCollapsed(prev => (prev.has(g) ? new Set([...prev].filter(x => x !== g)) : prev));
-  }, [activeId, templates]);
+  }, [activeKey, templates]);
 
   const lightHtml = buildLightHtml(sourceHtml, current.css);
 
@@ -417,10 +330,10 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
   const isDark = darkMode;
 
   const goPrev = () => {
-    if (currentIndex > 0) setActiveId(templates[currentIndex - 1].id);
+    if (currentIndex > 0) setActiveKey(templates[currentIndex - 1].key);
   };
   const goNext = () => {
-    if (currentIndex < templates.length - 1) setActiveId(templates[currentIndex + 1].id);
+    if (currentIndex < templates.length - 1) setActiveKey(templates[currentIndex + 1].key);
   };
 
   /* ── 사이드 패널 색상 ── */
@@ -488,12 +401,12 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             </button>
           </div>
 
-          {/* 시안 관리 문서 — 그룹·상태·UTM·제목이 전부 여기서 결정된다 */}
+          {/* 시안 관리 문서 — 그룹·상태·UTM이 여기서 결정된다 */}
           <a
             href={blobUrl(DOC_PATH)}
             target="_blank"
             rel="noopener noreferrer"
-            title="시안 관리 문서 열기 — 그룹·사용 상태·UTM·제목을 여기서 고칩니다"
+            title="시안 관리 문서 열기 — 그룹·사용 상태·UTM을 여기서 고칩니다"
             aria-label="시안 관리 문서를 GitHub에서 열기"
             className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
               isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-[#2a2a2e]'
@@ -502,17 +415,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
           >
             <Settings className="w-4 h-4" />
           </a>
-
-          {/* 발송용 코드 — 에디터가 보여주는 소스와 달리 제목·UTM이 적용된 결과물 */}
-          <button
-            onClick={() => setCodeModalOpen(true)}
-            title="제목과 UTM이 적용된, 메일에 붙여 넣을 코드"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isDark ? 'bg-[#3a3a3e] text-gray-200 hover:bg-[#4a4a4e]' : 'bg-gray-800 text-white hover:bg-gray-900'
-            }`}
-          >
-            <Code className="w-4 h-4" />발송용 코드
-          </button>
 
           {/* Live editor button */}
           <button
@@ -627,11 +529,11 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
 
                   {!isCollapsed && g.entries.map((entry) => {
                     // 선택된 시안이 이 항목 안에 있으면 그걸, 아니면 첫 시안을 대표로 쓴다
-                    const shown = entry.variants.find(v => v.id === activeId) ?? entry.variants[0];
-                    const isActive = entry.variants.some(v => v.id === activeId);
+                    const shown = entry.variants.find(v => v.key === activeKey) ?? entry.variants[0];
+                    const isActive = entry.variants.some(v => v.key === activeKey);
                     const hasBodyAB = entry.variants.length > 1;
                     return (
-                      <Fragment key={`${entry.label}-${entry.variants[0].id}`}>
+                      <Fragment key={`${entry.label}-${entry.variants[0].key}`}>
                       <div
                         className="group relative w-full transition-colors"
                         style={{
@@ -652,7 +554,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                         }}
                       >
                         <button
-                          onClick={() => setActiveId(shown.id)}
+                          onClick={() => setActiveKey(shown.key)}
                           title={`${entry.label} — ${STATUS_LABEL[shown.status]}`}
                           className="w-full text-left pl-5 pr-4 py-2 flex items-center gap-2 transition-colors"
                           style={{
@@ -700,15 +602,15 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                         </a>
                       </div>
 
-                      {/* 본문 A/B — 시안마다 파일이 다르므로 원본은 해당 .html 로 간다 */}
+                      {/* 시안 A/B — 제목만 다른 A/B도 파일이 따로이므로 원본은 해당 .html 로 간다 */}
                       {isActive && hasBodyAB && (
                         <VariantRow
                           caption="시안"
-                          options={entry.variants.map(v => ({ key: v.variant ?? v.id, title: v.name }))}
-                          selected={shown.variant ?? shown.id}
+                          options={entry.variants.map(v => ({ key: v.key, label: v.variant, title: v.name }))}
+                          selected={shown.key}
                           onSelect={key => {
-                            const next = entry.variants.find(v => (v.variant ?? v.id) === key);
-                            if (next) setActiveId(next.id);
+                            const next = entry.variants.find(v => v.key === key);
+                            if (next) setActiveKey(next.key);
                           }}
                           isDark={isDark}
                           href={blobUrl(shown.path)}
@@ -717,19 +619,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                         />
                       )}
 
-                      {/* 제목 A/B — 본문을 공유하므로 원본은 시안 문서로 간다 */}
-                      {isActive && (shown.subjects?.length ?? 0) > 1 && (
-                        <VariantRow
-                          caption="제목"
-                          options={shown.subjects!.map(v => ({ key: v.key, title: v.text }))}
-                          selected={variant?.key}
-                          onSelect={setSubjectKey}
-                          isDark={isDark}
-                          href={blobUrl(DOC_PATH)}
-                          hrefTitle={`GitHub에서 제목 원본 열기 — ${DOC_PATH}`}
-                          hrefLabel={`${shown.name} 제목 변형을 GitHub에서 열기`}
-                        />
-                      )}
                       </Fragment>
                     );
                   })}
@@ -885,11 +774,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             </main>
         )}
       </div>
-
-      {/* Code Modal */}
-      {codeModalOpen && (
-        <CodeModal templateName={current.name} fullHtml={exportHtml} onClose={() => setCodeModalOpen(false)} />
-      )}
 
       {/* Dark Mode Banner – fixed bottom */}
       <DarkModeBanner isDark={isDark} isFixed={isFixed} />

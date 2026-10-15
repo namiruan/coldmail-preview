@@ -48,21 +48,6 @@ export function parseTemplatesDoc(md) {
   const main = tableUnder(md, '## 시안');
   if (!main) return { templates: [], errors: ['"## 시안" 아래에서 표를 찾지 못했습니다.'] };
 
-  const subjectRows = tableUnder(md, '## 제목 변형') ?? [];
-  const subjectsById = new Map();
-  subjectRows.forEach((r, i) => {
-    const id = clean(r['ID']);
-    if (!id) { errors.push(`제목 변형 ${i + 1}번째 줄: ID가 비어 있습니다`); return; }
-    if (!subjectsById.has(id)) subjectsById.set(id, []);
-    subjectsById.get(id).push({
-      key: clean(r['키']),
-      text: clean(r['제목']),
-      term: orUndef(r['term']),
-      // 변형별로 utm_content 를 따로 둘 때. 제목 A/B를 content로 가른 기록을 그대로 살린다.
-      content: orUndef(r['content']),
-    });
-  });
-
   const templates = main.map(r => {
     const id = clean(r['ID']);
     const statusKo = clean(r['상태']);
@@ -85,7 +70,6 @@ export function parseTemplatesDoc(md) {
       status: status ?? 'active',
       variant: orUndef(r['시안']),
       utm: Object.keys(utm).length ? utm : undefined,
-      subjects: subjectsById.get(id),
     };
   });
 

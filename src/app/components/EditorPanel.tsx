@@ -496,7 +496,7 @@ export function EditorPanel({
           className={btn} style={{ color: dirty ? '#8b949e' : '#30363d' }}>
           <RotateCcw className="w-3.5 h-3.5" />초기화
         </button>
-        <button onClick={handleCopy} className={btn} style={{ color: '#8b949e' }}>
+        <button onClick={handleCopy} title="메일에 붙여 넣을 코드를 복사합니다 — 보이는 코드가 곧 발송 코드입니다" className={btn} style={{ color: '#8b949e' }}>
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
           {copied ? '복사됨' : '복사'}
         </button>
