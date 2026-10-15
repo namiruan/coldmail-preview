@@ -87,9 +87,13 @@ body {
   background: var(--color-surface-base);
   border-right: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
 
-  /* 이름이 시작하는 자리. 버튼 좌패딩 + 상태 + 번호 열 + 사이 */
+  /* 세 개의 열. 왼쪽부터 상태 → 번호 → 이름.
+     --rail-name-col 은 이름이 시작하는 자리이고, 그룹 이름표가 그 선에 선다. */
+  --rail-state-col: 7px;
+  --rail-no-col: var(--space-20);
   --rail-name-col: calc(
-    var(--space-12) + 7px + var(--space-6) + var(--space-20) + var(--space-8)
+    var(--space-12) + var(--rail-state-col) + var(--space-6)
+    + var(--rail-no-col) + var(--space-8)
   );
 }
 .rail__head {
@@ -142,9 +146,11 @@ body {
   margin-top: var(--space-8);
   border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
 }
+/* 가장 바깥 — 항목 줄의 왼쪽 끝에 선다. 위의 선·자간·본문색이 구역임을 말하므로
+   줄처럼 읽히지 않는다. */
 .rail__section {
   padding: var(--space-16) var(--space-12) var(--space-4);
-  padding-left: var(--rail-name-col);
+  padding-left: var(--space-12);
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-heading);
   letter-spacing: var(--letter-spacing-wide);
@@ -161,9 +167,9 @@ body {
   gap: var(--space-4);
   width: 100%;
   padding: var(--space-8) var(--space-12) var(--space-2);
-  /* 2단계는 1단계보다 한 칸 더 들어간다. 셰브런(12)+사이(4)만큼 당겨 두면
-     그룹 이름이 name-col + 12 에 선다 — 대분류보다 안쪽. */
-  padding-left: calc(var(--rail-name-col) - var(--space-4));
+  /* **이름표는 제 항목들의 이름과 같은 선에 선다** — 그 열의 머리글이 된다.
+     셰브런(12)과 사이(4)만큼 당겨 두면 그룹 이름이 정확히 name-col 에 선다. */
+  padding-left: calc(var(--rail-name-col) - var(--space-12) - var(--space-4));
   color: var(--color-text-subtle);
   cursor: pointer;
 }
@@ -231,8 +237,9 @@ body {
    값은 맞아도 뜻이 틀린다. 두 자리가 와도 이름 시작선이 밀리지 않을 만큼 잡는다. */
 .rail__no {
   flex: none;
-  min-width: var(--space-20);
-  margin-left: var(--space-6);
+  min-width: var(--rail-no-col);
+  /* 번호 뒤는 앞보다 조금 넓다 — 번호와 이름이 붙으면 한 낱말로 읽힌다 */
+  margin-right: var(--space-2);
   font-size: var(--font-size-label);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-subtle);
@@ -244,8 +251,8 @@ body {
 .rail__state {
   flex: none;
   align-self: center;
-  width: 7px;
-  height: 7px;
+  width: var(--rail-state-col);
+  height: var(--rail-state-col);
   color: var(--color-text-subtle);
 }
 .rail__state--active { border-radius: var(--radius-pill); background: currentColor; color: var(--color-text-success); }
