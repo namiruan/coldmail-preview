@@ -119,6 +119,10 @@ function getSubject(html: string): string {
 }
 
 /** 라이트 모드 – 원본 그대로 */
+/**
+ * 미리보기 iframe 전용 래퍼. srcDoc 은 완전한 문서를 요구한다.
+ * 내보내는 코드에는 쓰지 않는다 — 템플릿이 이미 완전한 문서라 두 겹이 된다.
+ */
 function buildLightHtml(html: string, css: string): string {
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -499,14 +503,15 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             <Settings className="w-4 h-4" />
           </a>
 
-          {/* Code button */}
+          {/* 발송용 코드 — 에디터가 보여주는 소스와 달리 제목·UTM이 적용된 결과물 */}
           <button
             onClick={() => setCodeModalOpen(true)}
+            title="제목과 UTM이 적용된, 메일에 붙여 넣을 코드"
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               isDark ? 'bg-[#3a3a3e] text-gray-200 hover:bg-[#4a4a4e]' : 'bg-gray-800 text-white hover:bg-gray-900'
             }`}
           >
-            <Code className="w-4 h-4" />코드 보기
+            <Code className="w-4 h-4" />발송용 코드
           </button>
 
           {/* Live editor button */}
@@ -883,7 +888,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
 
       {/* Code Modal */}
       {codeModalOpen && (
-        <CodeModal templateName={current.name} fullHtml={buildLightHtml(exportHtml, current.css)} onClose={() => setCodeModalOpen(false)} />
+        <CodeModal templateName={current.name} fullHtml={exportHtml} onClose={() => setCodeModalOpen(false)} />
       )}
 
       {/* Dark Mode Banner – fixed bottom */}
