@@ -525,6 +525,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                               >
                                 {/* 상태 표시 — 자리를 고정해 이름 길이와 무관하게 세로로 정렬된다 */}
                                 <span aria-hidden className={`rail__state rail__state--${shown.status}`} />
+                                <span aria-hidden className="rail__no">{shown.id}</span>
                                 <span className="rail__item-name">{entry.label}</span>
                                 <span className="sr-only">{STATUS_LABEL[shown.status]}</span>
                               </button>
