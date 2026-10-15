@@ -507,7 +507,9 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                           className={`ico-badge shrink-0 rail__chevron${isCollapsed ? ' rail__chevron--collapsed' : ''}`}
                         />
                         <span className="rail__group-name">{g.name}</span>
-                        <span className="rail__group-count">{g.entries.length}</span>
+                        <span className="rail__group-count badge badge--brand badge--pill badge--line">
+                          {g.entries.length}
+                        </span>
                       </button>
 
                       {!isCollapsed && g.entries.map(entry => {
@@ -529,17 +531,22 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                                 <span className="rail__item-name">{entry.label}</span>
                                 <span className="sr-only">{STATUS_LABEL[shown.status]}</span>
                               </button>
-                              {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다. */}
-                              <a
-                                href={blobUrl(shown.path)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title={`GitHub에서 원본 열기 — ${shown.path}`}
-                                aria-label={`${shown.name} 원본 소스를 GitHub에서 열기`}
-                                className="rail__source"
-                              >
-                                <FileCode2 className="ico-sm" />
-                              </a>
+                              {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다.
+                                  A/B가 있으면 이 줄은 묶음 이름일 뿐 가리키는 파일이
+                                  하나가 아니다. 그때는 어느 시안인지 고른 뒤, 아래
+                                  시안 줄에서 그 파일로 간다. */}
+                              {!hasVariants && (
+                                <a
+                                  href={blobUrl(shown.path)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={`GitHub에서 원본 열기 — ${shown.path}`}
+                                  aria-label={`${shown.name} 원본 소스를 GitHub에서 열기`}
+                                  className="rail__source"
+                                >
+                                  <FileCode2 className="ico-sm" />
+                                </a>
+                              )}
                             </div>
 
                             {/* 시안 A/B — 제목만 다른 A/B도 파일이 따로이므로 원본은 해당 .html 로 간다 */}

@@ -152,43 +152,58 @@ body {
   padding: var(--space-16) var(--space-12) var(--space-4);
   padding-left: var(--space-12);
   font-size: var(--font-size-label);
-  font-weight: var(--font-weight-heading);
+  font-weight: var(--font-weight-display);
   letter-spacing: var(--letter-spacing-wide);
   line-height: var(--line-height-ui);
   color: var(--color-text-body);
 }
 
-/* 그룹 — 2단계. 1단계와는 **무게와 자간**으로 갈린다. 크기를 줄이면 번호보다
-   작아지고, 색을 더 빼면 비활성으로 읽힌다. 남은 축이 무게다.
-   여기서는 접을 수 있으므로 셰브런이 왼쪽에 선다 — 그만큼 들여쓰기를 덜어낸다. */
+/* 그룹 — 여닫는 머리줄. components/molecules/accordion.md 의 헤더 신호를
+   목록 밀도로 옮긴 것이다(스펙의 Accordion 은 48px 카드라 256px 레일에 그대로
+   들어가지 않는다). 가져온 것: heading 무게 · 브랜드색 토글 · 개수 배지 ·
+   hover 때 브랜드 면.
+
+   **머리줄이 제 항목보다 약하면 안 된다.** 12px·body·회색으로 두었더니 14px
+   본문색 항목들 위에 놓인 흘린 캡션처럼 보였다. 글자 사다리를 12(대분류) →
+   13(그룹) → 14(항목)로, 무게를 700 → 600 → 400 으로 둔다.
+
+   이름표는 **제 항목들의 이름과 같은 선**에 선다 — 그 열의 머리글이 된다.
+   셰브런(12)과 사이(4)만큼 당겨 두면 그룹 이름이 정확히 name-col 에 선다. */
 .rail__group {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-gap-xs);
   width: 100%;
-  padding: var(--space-8) var(--space-12) var(--space-2);
-  /* **이름표는 제 항목들의 이름과 같은 선에 선다** — 그 열의 머리글이 된다.
-     셰브런(12)과 사이(4)만큼 당겨 두면 그룹 이름이 정확히 name-col 에 선다. */
+  height: var(--height-compact);
+  padding-right: var(--space-12);
   padding-left: calc(var(--rail-name-col) - var(--space-12) - var(--space-4));
-  color: var(--color-text-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-label);
   cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-base),
+              color var(--duration-fast) var(--easing-base);
 }
-.rail__group:hover { color: var(--color-text-body); }
+.rail__group:hover {
+  background: var(--color-action-brand-subtle);
+  color: var(--color-text-brand);
+}
 .rail__group-name {
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-heading);
   line-height: var(--line-height-ui);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rail__group-count {
-  margin-left: auto;
-  font-size: var(--font-size-meta);
-  font-variant-numeric: tabular-nums;
+/* 토글은 누르는 것이라 브랜드색이다 — 이름(중립)과 갈라 놓는다 */
+.rail__chevron {
+  flex: none;
+  color: var(--color-text-brand);
+  transition: transform var(--duration-base) var(--easing-base);
 }
-.rail__chevron { flex: none; transition: transform var(--duration-base) var(--easing-base); }
 .rail__chevron--collapsed { transform: rotate(-90deg); }
+/* 개수 — 스펙의 Accordion 헤더가 쓰는 배지 그대로 */
+.rail__group-count { margin-left: auto; }
 
 /* 항목 한 줄. --row-bg 는 겹쳐 둔 원본 링크가 긴 이름을 가릴 때 쓴다 */
 .rail__item {
