@@ -313,6 +313,12 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
    * 이름이 같으면 표에서 떨어져 있어도 한 묶음으로 본다. 자리는 처음 나온
    * 위치, 안쪽 순서는 표의 순서를 따른다.
    */
+  /** 필터를 통과한 시안. 고른 것이라고 봐주지 않는다 — 끈 상태는 끈 것이다. */
+  const visible = useMemo(
+    () => templates.filter(t => !hidden.has(t.status)),
+    [templates, hidden],
+  );
+
   const sections = useMemo(() => {
     type Entry = { label: string; variants: typeof templates };
     type Group = { name: string; entries: Entry[] };
@@ -321,9 +327,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
     const byCat = new Map<string, Section>();
     const byGroup = new Map<string, Group>();
     const byEntry = new Map<string, Entry>();
-    const visible = templates.filter(
-      t => !hidden.has(t.status) || t.key === activeKey,
-    );
     for (const t of visible) {
       let sec = byCat.get(t.category);
       if (!sec) {
@@ -348,7 +351,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
       e.variants.push(t);
     }
     return out;
-  }, [templates, hidden, activeKey]);
+  }, [visible]);
 
   const [editorOpen, setEditorOpen] = useState(initialEditorOpen);
   /** 편집 중인 코드. null이면 파일 원본 그대로. */
@@ -366,7 +369,8 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
   const sourceHtml = draft ?? current.html;
   const subject = getSubject(sourceHtml);
 
-  const currentIndex = templates.findIndex(t => t.key === activeKey);
+  /** 보이는 목록에서 몇 번째인가. 필터로 가려졌으면 -1 이다. */
+  const visibleIndex = visible.findIndex(t => t.key === activeKey);
 
   /** 시안을 바꾸면 편집 중이던 내용은 그 시안의 것이 아니므로 버린다. */
   useEffect(() => { setDraft(null); }, [activeKey]);
@@ -388,11 +392,15 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
      없으므로 항상 밝은 면을 쓴다. */
   const isDark = darkMode;
 
+  /* 화면에 보이는 순서대로 걷는다 — 가려진 시안을 건너뛰지 않으면 화살표가
+     목록에 없는 곳으로 데려간다. 고른 것이 가려졌으면(-1) 끝에서 들어온다. */
   const goPrev = () => {
-    if (currentIndex > 0) setActiveKey(templates[currentIndex - 1].key);
+    if (!visible.length) return;
+    setActiveKey(visible[visibleIndex < 0 ? visible.length - 1 : visibleIndex - 1].key);
   };
   const goNext = () => {
-    if (currentIndex < templates.length - 1) setActiveKey(templates[currentIndex + 1].key);
+    if (!visible.length) return;
+    setActiveKey(visible[visibleIndex < 0 ? 0 : visibleIndex + 1].key);
   };
 
   /** 미리보기 무대 — 상태 안내 + 메일 클라이언트 창. 에디터 유무와 무관하게 같다. */
@@ -482,6 +490,12 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
         <aside className="rail">
           {/* Template List — group별로 묶고, 그룹 제목을 눌러 접는다 */}
           <div className="rail__list">
+            {!visible.length && (
+              <p className="rail__empty">
+                아래 필터가 모두 꺼져 있어 보여 줄 시안이 없습니다.
+                하나를 켜면 그 상태의 시안이 다시 나옵니다.
+              </p>
+            )}
             {sections.map(sec => (
               <div key={sec.name} className="rail__block">
                 {/* 대분류 — 콜드메일 / 발신템플릿. 구역이므로 위에 선을 긋는다 */}
@@ -593,13 +607,20 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
           {/* 이동 — 화살표 둘과 현재 위치를 한 줄에 모은다. 셋 다 "목록에서 어디쯤인가"를
               말하는 것이라 따로 두면 레일 아래가 세 줄이 된다. */}
           <div className="rail__pager">
-            <button onClick={goPrev} disabled={currentIndex === 0} className="rail__step" title="이전 시안">
+            <button
+              onClick={goPrev}
+              disabled={!visible.length || visibleIndex === 0}
+              className="rail__step"
+              title="이전 시안"
+            >
               <ChevronUp className="ico-sm" />
             </button>
-            <span className="rail__position">{currentIndex + 1} / {templates.length}</span>
+            <span className="rail__position">
+              {visibleIndex < 0 ? '–' : visibleIndex + 1} / {visible.length}
+            </span>
             <button
               onClick={goNext}
-              disabled={currentIndex === templates.length - 1}
+              disabled={!visible.length || visibleIndex === visible.length - 1}
               className="rail__step"
               title="다음 시안"
             >
