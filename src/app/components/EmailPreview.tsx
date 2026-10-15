@@ -424,6 +424,10 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
       ) : (
         <MobileEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
       )}
+
+      {/* 다크모드 안내는 **미리보기 안의 일**이다. 화면 전체에 고정해 두면
+          에디터가 열렸을 때 그 위를 덮는다. */}
+      <DarkModeBanner isDark={isDark} isFixed={isFixed} />
     </>
   );
 
@@ -672,8 +676,6 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
           <main className="stage">{stage}</main>
         )}
       </div>
-
-      <DarkModeBanner isDark={isDark} isFixed={isFixed} />
     </div>
   );
 }

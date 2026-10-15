@@ -421,15 +421,17 @@ body {
 }
 .app__split-handle:hover { background: var(--color-border-brand); }
 
-/* 화면 아래 고정 안내 */
+/* 무대 아래에 붙는 안내 — 무대(스크롤 칸) 안에서 sticky 로 선다.
+   화면 전체에 fixed 로 두면 에디터가 열렸을 때 그 위를 덮는다. */
 .app__footnote {
-  position: fixed;
-  inset-inline: 0;
+  position: sticky;
   bottom: 0;
-  z-index: 40;
+  z-index: 10;
+  width: 100%;
+  margin-top: auto;
   display: flex;
   justify-content: center;
-  padding: var(--space-inset-md) var(--space-inset-2xl);
+  padding-top: var(--space-inset-md);
   pointer-events: none;
 }
 .app__footnote > .banner {
