@@ -78,6 +78,18 @@ for (const [key, group] of entries) {
   }
 }
 
+// 문서가 두 겹이면 메일 클라이언트마다 어느 <head>를 살릴지 갈려 렌더가 달라진다.
+// 브라우저는 너그러워 미리보기만으로는 드러나지 않으므로 여기서 막는다.
+for (const t of templates) {
+  if (!t.file || !htmlFiles.includes(t.file)) continue;
+  const html = readFileSync(join(DIR, t.file), 'utf8');
+  const where = `${t.group} / ${t.label}`;
+  for (const [re, ko] of [[/<!DOCTYPE/gi, 'DOCTYPE'], [/<html[\s>]/gi, '<html>'], [/<body[\s>]/gi, '<body>']]) {
+    const n = (html.match(re) || []).length;
+    if (n > 1) fail(where, `${t.file}: ${ko} 가 ${n}개입니다 — 문서는 한 겹이어야 합니다`);
+  }
+}
+
 for (const f of htmlFiles) {
   if (!usedFiles.has(f)) fail('(고아 파일)', `templates/${f} 이 "## 시안" 표에 없습니다`);
 }
