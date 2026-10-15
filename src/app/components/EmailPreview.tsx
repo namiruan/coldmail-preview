@@ -433,7 +433,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
       <header className="app__header">
         <div className="app__brand">
           <Mail className="ico-md" />
-          <span className="app__title">콜드메일 시안 미리보기</span>
+          <span className="app__title">김반장 메일 템플릿 디자인</span>
         </div>
 
         <div className="app__tools">

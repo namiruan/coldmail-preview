@@ -1,9 +1,9 @@
-# 콜드메일 라이브 테스트 (coldmail-preview)
+# 김반장 메일 템플릿 디자인 (coldmail-preview)
 
 **▶ https://namiruan.github.io/coldmail-preview/**
 
 HTML 이메일 코드를 **메일 클라이언트에서 실제로 보이는 모습**으로 미리보는 도구입니다.
-Gmail 스타일 셸 안에 HTML을 렌더링해서, 보내기 전에 레이아웃이 깨지는지 확인합니다.
+네이버메일 셸 안에 HTML을 렌더링해서, 보내기 전에 레이아웃이 깨지는지 확인합니다.
 
 - 데스크톱 / 모바일 뷰 전환
 - 라이트 모드 + **Gmail 자동 다크모드 시뮬레이션** (`color-scheme` 선언이 없는 메일을 Gmail이 반전시키는 동작을 근사)
