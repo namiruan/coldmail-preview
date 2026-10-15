@@ -12,9 +12,9 @@
 | 08 | 콜드메일 | 퇴직공제 | 26.04.02~26.04.06 | - | 08-premium-title-ab.html | 운영종료 | coldmail | email | title_ab | - |
 | 04 | 콜드메일 | 퇴직공제 | 26.04.07~26.06.18 | - | 04-severance-agency.html | 운영종료 | coldmail | email | - | - |
 | 09 | 콜드메일 | 퇴직공제 | 26.06.23~ | - | 09-face-section-ab.html | 사용중 | coldmail | email | - | - |
-| 05 | 발신템플릿 | 홈페이지용 | 가이드북 메일 전송 | - | 05-guidebook.html | 사용중 | guidebook | email | - | - |
+| 05 | 발신템플릿 | 홈페이지용 | 가이드북 메일 전송 | - | 05-guidebook.html | 미사용 | guidebook | email | - | - |
 | 06 | 발신템플릿 | 인트라넷용 | 최종 계약서 | - | 06-quote.html | 사용중 | - | - | - | - |
-| 07 | 발신템플릿 | 홈페이지용 | 예상 견적서 | - | 07-quote-estimate.html | 사용중 | - | - | - | - |
+| 07 | 발신템플릿 | 홈페이지용 | 예상 견적서 | - | 07-quote-estimate.html | 미사용 | - | - | - | - |
 
 - **시안** — 본문이 다른 A/B. 같은 그룹·이름의 줄이 여럿이면 한 항목으로 묶이고
   `시안 A B` 토글이 생깁니다. 변형이 없으면 `-` 로 둡니다.
