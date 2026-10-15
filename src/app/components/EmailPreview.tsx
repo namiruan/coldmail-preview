@@ -10,6 +10,9 @@ import { DEFAULT_TEMPLATES } from '../data/defaultTemplates';
 import { blobUrl, DOC_PATH } from '../data/repo';
 import { subjectTerm } from '../data/defaultTemplates';
 import { applyUtm } from '../data/utm';
+import { EditorPanel } from './EditorPanel';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { editUrl } from '../data/repo';
 
 type DeviceMode = 'desktop' | 'mobile';
 
@@ -285,7 +288,7 @@ function CodeModal({
 /* ══════════════════════════════════════════
    Main Component
 ══════════════════════════════════════════ */
-export function EmailPreview() {
+export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?: boolean } = {}) {
   const templates = DEFAULT_TEMPLATES;
   const navigate = useNavigate();
   const [activeId, setActiveId] = useState(templates[0]?.id ?? '01');
@@ -349,6 +352,9 @@ export function EmailPreview() {
   }, [templates, showPaused, activeId]);
 
   const [subjectKey, setSubjectKey] = useState<string | null>(null);
+  const [editorOpen, setEditorOpen] = useState(initialEditorOpen);
+  /** 편집 중인 코드. null이면 파일 원본 그대로. */
+  const [draft, setDraft] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const toggleGroup = useCallback((name: string) => {
     setCollapsed(prev => {
@@ -359,15 +365,19 @@ export function EmailPreview() {
   }, []);
 
   const current = templates.find(t => t.id === activeId) ?? templates[0];
+
+  /** 편집 중이면 편집본을, 아니면 파일 원본을 쓴다. */
+  const sourceHtml = draft ?? current.html;
+
   const currentIndex = templates.findIndex(t => t.id === activeId);
   // 제목은 manifest가 원본이다. subjects가 없으면 예전처럼 <title>에서 읽는다.
   const variants = current.subjects ?? [];
   const variant = variants.find(v => v.key === subjectKey) ?? variants[0];
-  const subject = variant?.text ?? getSubject(current.html);
+  const subject = variant?.text ?? getSubject(sourceHtml);
 
   // 내보내는 HTML: 선택한 변형의 제목과 UTM을 반영한다.
   const exportHtml = useMemo(() => {
-    let html = current.html;
+    let html = sourceHtml;
     if (variant) {
       const title = variant.text.replace(/[<>]/g, '');
       if (/<title[^>]*>[^<]*<\/title>/i.test(html)) {
@@ -384,22 +394,22 @@ export function EmailPreview() {
       ...(variants.length > 1 && !variant.content ? { term: subjectTerm(variant) } : {}),
       ...(variant.content ? { content: variant.content } : {}),
     });
-  }, [current, variant, variants.length]);
-  useEffect(() => { setSubjectKey(null); }, [activeId]);
+  }, [sourceHtml, current.utm, variant, variants.length]);
+  useEffect(() => { setSubjectKey(null); setDraft(null); }, [activeId]);
 
   useEffect(() => {
     const g = templates.find(t => t.id === activeId)?.group;
     if (g) setCollapsed(prev => (prev.has(g) ? new Set([...prev].filter(x => x !== g)) : prev));
   }, [activeId, templates]);
 
-  const lightHtml = buildLightHtml(current.html, current.css);
+  const lightHtml = buildLightHtml(sourceHtml, current.css);
 
-  const isFixed = hasColorSchemeFix(current.html);
+  const isFixed = hasColorSchemeFix(sourceHtml);
   const iframeDoc = !darkMode
     ? lightHtml
     : isFixed
-      ? buildFixedDarkHtml(current.html, current.css)
-      : buildGmailAutoDarkHtml(current.html, current.css);
+      ? buildFixedDarkHtml(sourceHtml, current.css)
+      : buildGmailAutoDarkHtml(sourceHtml, current.css);
   const isDark = darkMode;
 
   const goPrev = () => {
@@ -501,9 +511,15 @@ export function EmailPreview() {
 
           {/* Live editor button */}
           <button
-            onClick={() => navigate('/editor')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors text-white"
-            style={{ background: '#03c75a' }}
+            onClick={() => setEditorOpen(v => !v)}
+            aria-pressed={editorOpen}
+            title={editorOpen ? '에디터 닫기' : '오른쪽에 코드 에디터 열기'}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              editorOpen ? '' : 'text-white'
+            }`}
+            style={editorOpen
+              ? { background: isDark ? '#3a3a3e' : '#e5e7eb', color: isDark ? '#e5e7eb' : '#374151' }
+              : { background: '#03c75a', color: '#fff' }}
             onMouseEnter={e => e.currentTarget.style.background = '#02b34e'}
             onMouseLeave={e => e.currentTarget.style.background = '#03c75a'}
           >
@@ -775,34 +791,94 @@ export function EmailPreview() {
         </aside>
 
         {/* ── Preview Area ── */}
-        <main
-          className="flex-1 overflow-auto flex flex-col items-center py-8 px-6"
-          style={{ background: isDark ? '#07070a' : '#f1f3f4' }}
-        >
-          {STATUS_UI[current.status] && (
-            <div
-              className="w-full max-w-[900px] mb-4 px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm"
-              style={{
-                background: STATUS_UI[current.status]!.tone(isDark).bg,
-                color: STATUS_UI[current.status]!.tone(isDark).fg,
-                border: `1px solid ${STATUS_UI[current.status]!.tone(isDark).border}`,
-              }}
-              role="status"
-            >
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>
-                <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
-                {STATUS_UI[current.status]!.notice}
-              </span>
-            </div>
-          )}
+        {editorOpen ? (
+          <PanelGroup direction="horizontal" className="flex-1 overflow-hidden">
+            <Panel defaultSize={58} minSize={30}>
+              <div className="h-full overflow-auto flex flex-col items-center py-8 px-6"
+                style={{ background: isDark ? '#07070a' : '#f1f3f4' }}>
+              <div
+                className="flex-1 overflow-auto flex flex-col items-center py-8 px-6"
+                style={{ background: isDark ? '#07070a' : '#f1f3f4' }}
+              >
+                {STATUS_UI[current.status] && (
+                  <div
+                    className="w-full max-w-[900px] mb-4 px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm"
+                    style={{
+                      background: STATUS_UI[current.status]!.tone(isDark).bg,
+                      color: STATUS_UI[current.status]!.tone(isDark).fg,
+                      border: `1px solid ${STATUS_UI[current.status]!.tone(isDark).border}`,
+                    }}
+                    role="status"
+                  >
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>
+                      <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
+                      {STATUS_UI[current.status]!.notice}
+                    </span>
+                  </div>
+                )}
 
-          {device === 'desktop' ? (
-            <DesktopEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
-          ) : (
-            <MobileEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
-          )}
-        </main>
+                {device === 'desktop' ? (
+                  <DesktopEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
+                ) : (
+                  <MobileEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
+                )}
+              </div>
+              </div>
+            </Panel>
+            <PanelResizeHandle
+              className="w-1 transition-colors"
+              style={{ background: isDark ? '#2a2a2e' : '#e5e7eb' }}
+            />
+            <Panel defaultSize={42} minSize={25}>
+              <EditorPanel
+                code={sourceHtml}
+                onChange={setDraft}
+                onReset={() => setDraft(null)}
+                onCommit={async () => {
+                  try {
+                    await navigator.clipboard.writeText(sourceHtml);
+                    toast.success('코드를 복사했습니다. GitHub 편집기에서 전체 선택 후 붙여넣고 커밋하세요.');
+                  } catch {
+                    toast.error('복사에 실패했습니다. 에디터에서 직접 복사해 주세요.');
+                  }
+                  window.open(editUrl(current.path), '_blank', 'noopener,noreferrer');
+                }}
+                fileName={current.path}
+                dirty={draft !== null}
+              />
+            </Panel>
+          </PanelGroup>
+        ) : (
+            <main
+              className="flex-1 overflow-auto flex flex-col items-center py-8 px-6"
+              style={{ background: isDark ? '#07070a' : '#f1f3f4' }}
+            >
+              {STATUS_UI[current.status] && (
+                <div
+                  className="w-full max-w-[900px] mb-4 px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm"
+                  style={{
+                    background: STATUS_UI[current.status]!.tone(isDark).bg,
+                    color: STATUS_UI[current.status]!.tone(isDark).fg,
+                    border: `1px solid ${STATUS_UI[current.status]!.tone(isDark).border}`,
+                  }}
+                  role="status"
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>
+                    <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
+                    {STATUS_UI[current.status]!.notice}
+                  </span>
+                </div>
+              )}
+
+              {device === 'desktop' ? (
+                <DesktopEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
+              ) : (
+                <MobileEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
+              )}
+            </main>
+        )}
       </div>
 
       {/* Code Modal */}
