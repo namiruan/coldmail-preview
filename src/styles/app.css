@@ -156,10 +156,13 @@ body {
   padding: var(--space-16) var(--space-12) var(--space-8);
   padding-left: var(--space-12);
   font-size: var(--rail-text-size);
-  font-weight: var(--font-weight-display);
+  /* **목록에서 굵은 것은 묶음 머리줄 하나다.** 구역 표지까지 굵으면 굵은 글자가
+     둘이라 어느 쪽이 머리인지 흐려진다. 표지는 위의 선과 넓은 자간, 그리고
+     한 단계 연한 잉크로 「다른 종류」임을 말한다 — 굵기를 빌릴 필요가 없다. */
+  font-weight: var(--font-weight-body);
   letter-spacing: var(--letter-spacing-wide);
   line-height: var(--line-height-ui);
-  color: var(--color-text-body);
+  color: var(--color-text-subtle);
 }
 
 /* 묶음 사이 — **면이 아니라 선이다.**
