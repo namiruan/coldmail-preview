@@ -287,6 +287,82 @@
   box-shadow: none;
 }
 
+/* ══ design-system/components/atoms/tag.md ══ */
+/* ── Base ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-gap-xs);
+  height: var(--height-dense);
+  padding: var(--space-inset-squish-sm);
+  border-radius: var(--radius-xs);
+  border: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+  background: var(--color-surface-base);
+  color: var(--color-text-label);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-ui);
+  white-space: nowrap;
+  cursor: default;
+  transition: background var(--duration-fast) var(--easing-base),
+              border-color var(--duration-fast) var(--easing-base),
+              color var(--duration-fast) var(--easing-base);
+}
+
+/* ── Shape: pill ── */
+.tag--pill { border-radius: var(--radius-pill); }
+
+/* ── Size: md ── */
+.tag--md {
+  height: var(--height-compact);
+  padding: var(--space-inset-squish-md);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Selectable ── */
+button.tag { cursor: pointer; }
+/* 선택 시 브랜드 색으로 전환되므로 hover도 브랜드로 예고. 이미 선택된 상태는 제외 */
+button.tag:not(.tag--selected):hover {
+  background: var(--color-action-brand-hover);
+  border-color: var(--color-border-brand-subtle);
+  color: var(--color-text-brand);
+}
+
+/* ── Selected ── */
+/* selected hover 미정의 — 이미 선택된 상태에서 재선택 예고가 불필요하므로 의도적 생략 */
+.tag--selected {
+  background: var(--color-action-brand-subtle);
+  border-color: var(--color-border-brand);
+  color: var(--color-text-brand);
+}
+
+/* ── Disabled ── */
+/* 미선택: 연한 회색 fill + text-disabled(gray-400) */
+/* 선택됨: surface-disabled-strong(gray-200) — 배경이 진해지므로 text-subtle(gray-500)로 가독성 확보 */
+.tag--disabled {
+  pointer-events: none;
+  background: var(--color-surface-disabled);
+  border-color: var(--color-border-disabled);
+  color: var(--color-text-disabled);
+}
+.tag--selected.tag--disabled {
+  background: var(--color-surface-disabled-strong);
+  /* border-disabled(gray-200)가 배경(gray-200)과 동색이라 라인이 안 보임 — border-selected(gray-500)로 명시해 text-subtle과 동일 명도로 테두리 유지 */
+  border-color: var(--color-border-selected);
+  color: var(--color-text-subtle);
+}
+
+/* ── Removable ── */
+/* 선택된 항목을 제거하는 용도이므로 selected 스타일 고정 */
+.tag--removable {
+  background: var(--color-action-brand-subtle);
+  border-color: var(--color-border-brand);
+  color: var(--color-text-brand);
+  padding-inline-end: var(--space-inset-xs);
+}
+/* 제거 버튼 색은 부모 color 상속 (icon-on--badge / icon-on--sm 기반 스타일은 utilities/icon.css 참조) */
+
 /* ══ design-system/components/molecules/banner.md ══ */
 /* ── Banner ──────────────────────────────────
    시각 스타일은 Toast와 동일 체계(상태별 surface-*-subtle 배경 + border-*-subtle + text-* 색).

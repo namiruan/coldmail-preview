@@ -113,6 +113,10 @@ src/
 그 상태의 개수가 붙어 있어, 꺼 둔 상태도 몇 개가 있는지는 보입니다.
 **고른 시안은 제 상태를 꺼도 목록에 남습니다** — 보고 있던 자리를 잃지 않게.
 
+필터 칩은 `components/atoms/tag.md` 의 selectable Tag 입니다("필터 선택·해제 →
+selectable: 전체 태그가 버튼"). 켜짐/꺼짐을 잉크 한 단계로만 가르면 어느 쪽이
+켜진 것인지 알기 어려워, 면·테두리·글자색이 함께 바뀌는 Tag 를 씁니다.
+
 `미사용`·`운영종료` 시안을 열면 본문 위에 안내가 뜹니다. 모르고 발송하는 걸 막습니다.
 
 > 상태는 문서에 있으니 git에 남고 팀 전체가 같은 값을 봅니다. 반면 범례의 필터는
@@ -182,7 +186,7 @@ node scripts/sync-kbz.mjs ../kbz_3.0_ui_stytem   # 로컬 체크아웃에서 받
 | `src/styles/kbz/tokens.css` | 토큰 번들 **원본 그대로** |
 | `src/styles/kbz/components.css` | 쓰는 컴포넌트의 CSS만. 각 스펙 문서의 ` ```css ` 블록에서 뽑습니다 |
 
-쓰는 컴포넌트는 Button · Badge · Segment · Banner · Toast · Icon Button 입니다.
+쓰는 컴포넌트는 Button · Badge · Tag · Segment · Banner · Toast · Icon Button 입니다.
 (Icon Button은 `utilities/icon.css` 가 토큰 번들에 함께 들어와 따로 받지 않습니다.)
 늘어나면 `scripts/sync-kbz.mjs` 의 `COMPONENTS` 목록에 적고 다시 받습니다.
 

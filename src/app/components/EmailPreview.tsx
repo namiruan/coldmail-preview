@@ -580,7 +580,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
                   onClick={() => toggleStatus(k)}
                   aria-pressed={on}
                   title={on ? `${STATUS_LABEL[k]} 시안 숨기기` : `${STATUS_LABEL[k]} 시안 ${counts[k]}개 보기`}
-                  className="rail__filter"
+                  className={`tag rail__filter${on ? ' tag--selected' : ''}`}
                 >
                   <span aria-hidden className={`rail__state rail__state--${k}`} />
                   {STATUS_LABEL[k]}
