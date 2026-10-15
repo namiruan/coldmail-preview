@@ -113,14 +113,21 @@ body {
 
 .rail__list { flex: 1; overflow-y: auto; }
 
-/* 대분류 — 콜드메일 / 발신템플릿 */
+/* 대분류 — 콜드메일 / 발신템플릿
+   **1단계는 구역이다.** 여백만으로 나누면 어디서 끝났는지가 흐려진다. 선을 그어
+   끝을 말하고, 색을 본문색까지 올려 2단계(그룹·흐림)와 갈라 놓는다.
+   김반장 prototype/chrome.css 의 .proto-nav-group-label 이 같은 판단을 적어 두었다. */
+.rail__block + .rail__block {
+  margin-top: var(--space-stack-sm);
+  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+}
 .rail__section {
-  padding: var(--space-inset-2xl) var(--space-inset-xl) var(--space-inset-md);
-  font-size: var(--font-size-meta);
+  padding: var(--space-inset-xl) var(--space-inset-xl) var(--space-inset-sm);
+  font-size: var(--font-size-label);
   font-weight: var(--font-weight-heading);
   letter-spacing: var(--letter-spacing-wide);
   line-height: var(--line-height-ui);
-  color: var(--color-text-subtle);
+  color: var(--color-text-body);
 }
 
 /* 그룹 머리 — 누르면 접힌다 */
@@ -370,10 +377,17 @@ body {
 
 /* ── 디자인 시스템이 다루지 않는 자리 ──────
    아래 세 가지는 스펙에 없는 조합이라 여기서 메운다. 토큰만 쓴다.
-   디자인 시스템에 올릴 거리: (1) 아이콘+글자 Segment, (2) 어두운 면 위의 버튼 비활성. */
+   디자인 시스템에 올릴 거리: (1) 아이콘+글자 Segment, (1-2) 링크인 Icon Button,
+   (2) 어두운 면 위의 버튼 비활성. */
 
 /* (1) Segment 아이템에 아이콘을 넣은 경우 — 스펙의 Segment는 글자 전용이라 gap이 없다 */
 .segment__item { gap: var(--space-gap-2xs); }
+
+/* (1-2) Icon Button 의 hover·pressed 는 button 요소에만 걸려 있다.
+       참고 문서로 가는 길은 <a> 가 맞아서(button.md: 페이지 이동은 <a>) 여기서 같은 상태를 준다. */
+a.app__icon-link { color: var(--color-text-label); transition: background var(--duration-fast) var(--easing-base); }
+a.app__icon-link:hover  { background: var(--color-action-neutral-hover); }
+a.app__icon-link:active { background: var(--color-action-neutral-pressed); }
 
 /* (2) 어두운 바 위의 비활성 버튼 — btn--inactive 의 회색 면은 밝은 배경 기준이라
        어두운 바에서 밝게 튄다. 면을 지우고 색만 낮춘다. */

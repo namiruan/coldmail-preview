@@ -25,7 +25,6 @@ const COMPONENTS = [
   'design-system/components/atoms/button.md',
   'design-system/components/atoms/badge.md',
   'design-system/components/atoms/segment.md',
-  'design-system/components/atoms/action-group.md',
   'design-system/components/molecules/banner.md',
 ];
 

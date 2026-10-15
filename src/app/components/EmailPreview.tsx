@@ -430,19 +430,19 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             ]}
           />
 
-          {/* 시안 관리 문서 — 그룹·상태·UTM이 여기서 결정된다. 도구 액션이라 ActionGroup */}
-          <div className="action-group">
-            <a
-              href={blobUrl(DOC_PATH)}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="시안 관리 문서 열기 — 그룹·사용 상태·UTM을 여기서 고칩니다"
-              aria-label="시안 관리 문서를 GitHub에서 열기"
-              className="action-btn action-btn--sm action-btn--icon-only"
-            >
-              <Settings className="ico-sm" />
-            </a>
-          </div>
+          {/* 시안 관리 문서 — 그룹·상태·UTM이 여기서 결정된다.
+              결정이 아니라 참고 문서로 가는 길이라 Icon Button(중립, hover tint만).
+              머리말에서 면을 가진 것은 라이브 에디터 하나뿐이다. */}
+          <a
+            href={blobUrl(DOC_PATH)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="시안 관리 문서 열기 — 그룹·사용 상태·UTM을 여기서 고칩니다"
+            aria-label="시안 관리 문서를 GitHub에서 열기"
+            className="icon-on--md app__icon-link"
+          >
+            <Settings />
+          </a>
 
           {/* 코드를 고치는 것이 이 화면의 핵심 작업이라 primary */}
           <button
@@ -489,8 +489,8 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
           {/* Template List — group별로 묶고, 그룹 제목을 눌러 접는다 */}
           <div className="rail__list">
             {sections.map(sec => (
-              <div key={sec.name}>
-                {/* 대분류 — 콜드메일 / 발신템플릿 */}
+              <div key={sec.name} className="rail__block">
+                {/* 대분류 — 콜드메일 / 발신템플릿. 구역이므로 위에 선을 긋는다 */}
                 <div className="rail__section">{sec.name}</div>
 
                 {sec.groups.map(g => {

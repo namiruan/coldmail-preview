@@ -178,7 +178,8 @@ node scripts/sync-kbz.mjs ../kbz_3.0_ui_stytem   # 로컬 체크아웃에서 받
 | `src/styles/kbz/tokens.css` | 토큰 번들 **원본 그대로** |
 | `src/styles/kbz/components.css` | 쓰는 컴포넌트의 CSS만. 각 스펙 문서의 ` ```css ` 블록에서 뽑습니다 |
 
-쓰는 컴포넌트는 Button · Badge · Segment · ActionGroup · Banner · Toast 입니다.
+쓰는 컴포넌트는 Button · Badge · Segment · Banner · Toast · Icon Button 입니다.
+(Icon Button은 `utilities/icon.css` 가 토큰 번들에 함께 들어와 따로 받지 않습니다.)
 늘어나면 `scripts/sync-kbz.mjs` 의 `COMPONENTS` 목록에 적고 다시 받습니다.
 
 ### 이 규칙 밖에 있는 것
@@ -199,6 +200,9 @@ node scripts/sync-kbz.mjs ../kbz_3.0_ui_stytem   # 로컬 체크아웃에서 받
   어두운 바에서 밝게 튑니다.
 - **아이콘** — 디자인 시스템 아이콘 63개 중 이 화면에 필요한 Mail·Monitor·Smartphone·
   Sun·Moon·Code·GitBranch 가 없어 lucide를 씁니다. 크기·색만 토큰(`--icon-*`)을 따릅니다.
+- **링크인 Icon Button** — Icon Button의 hover·pressed 는 `button` 요소에만 걸려
+  있습니다. 참고 문서로 가는 길은 `<a>` 가 맞아서(`button.md`: 페이지 이동은 `<a>`)
+  같은 상태를 앱에서 따로 줍니다.
 - **중립 계열로 켜지는 필터** — `운영종료 N` 은 누르는 필터라 스펙상 Tag 인데,
   Tag의 selected 는 브랜드색 하나뿐입니다. 끝난 시안을 거르는 버튼이 켜졌다고
   파랗게 되면 "지금 쓰는 것"으로 읽힙니다. 그래서 중립 Badge 를 버튼으로 쓰고,
