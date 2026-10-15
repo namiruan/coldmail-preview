@@ -1,0 +1,382 @@
+/*
+ * 김반장 3.0 디자인 시스템 위에 올린 이 앱만의 화면.
+ * ─────────────────────────────────────────────
+ * 색·간격·크기는 전부 토큰(src/styles/kbz/tokens.css)에서 가져온다.
+ * 여기에 새 색값을 적지 않는다 — 토큰에 없으면 디자인 시스템에 요청한다.
+ *
+ * 네이버 메일 미리보기(DesktopEmailClient·MobileEmailClient)는 이 규칙 밖이다.
+ * 그쪽은 네이버 UI를 흉내 내는 것이 목적이라 네이버 색을 그대로 쓴다.
+ */
+
+/* ── 전역 ────────────────────────────────── */
+:root {
+  /* toast.md 가 참조하는 상단 네비 높이. 토큰에 없어 앱에서 정한다(스펙 권장값 56px). */
+  --height-topnav: 56px;
+}
+
+body {
+  font-family: var(--font-family-base);
+  color: var(--color-text-body);
+}
+
+/* 포커스 링 — components/_index.md 의 전역 규칙 */
+:focus-visible {
+  outline: var(--stroke-md) solid var(--color-border-focus);
+  outline-offset: var(--space-offset-focus);
+}
+
+/* 아이콘은 lucide를 쓰되 크기·색은 토큰을 따른다 */
+.ico-sm { width: var(--icon-sm); height: var(--icon-sm); }
+.ico-md { width: var(--icon-md); height: var(--icon-md); }
+.ico-badge { width: var(--icon-badge); height: var(--icon-badge); }
+
+/* ── 앱 셸 ───────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-surface-subtle);
+}
+
+.app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-gap-md);
+  flex-shrink: 0;
+  height: var(--height-topnav);
+  padding-inline: var(--space-inset-2xl);
+  background: var(--color-surface-base);
+  border-bottom: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+}
+.app__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-sm);
+  color: var(--color-text-brand-vivid);
+}
+.app__title {
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-display);
+}
+.app__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-sm);
+}
+
+/* ── 시안 목록(좌측) ─────────────────────── */
+.rail {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 208px;
+  background: var(--color-surface-base);
+  border-right: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+}
+.rail__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-sm);
+  padding: var(--space-inset-xl) var(--space-inset-lg) var(--space-inset-md);
+}
+.rail__caption {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-label);
+}
+
+/* 이전·다음 — 결정이 아니라 이동이라 ghost */
+.rail__step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--height-dense);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-subtle);
+  background: var(--color-surface-subtle);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-base);
+}
+.rail__step:hover:not(:disabled) { background: var(--color-action-neutral-faint); }
+.rail__step:disabled {
+  background: transparent;
+  color: var(--color-text-disabled-faint);
+  cursor: default;
+}
+
+.rail__list { flex: 1; overflow-y: auto; }
+
+/* 대분류 — 콜드메일 / 발신템플릿 */
+.rail__section {
+  padding: var(--space-inset-xl) var(--space-inset-xl) var(--space-inset-sm);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-heading);
+  letter-spacing: var(--letter-spacing-wide);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-subtle);
+}
+
+/* 그룹 머리 — 누르면 접힌다 */
+.rail__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-xs);
+  width: 100%;
+  padding: var(--space-inset-md) var(--space-inset-xl);
+  color: var(--color-text-label);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-base);
+}
+.rail__group:hover { background: var(--color-action-neutral-faint); }
+.rail__group-name {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-ui);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rail__group-count {
+  margin-left: auto;
+  font-size: var(--font-size-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-subtle);
+}
+.rail__chevron { transition: transform var(--duration-base) var(--easing-base); }
+.rail__chevron--collapsed { transform: rotate(-90deg); }
+
+/* 항목 한 줄. --row-bg 는 겹쳐 둔 원본 링크가 긴 이름을 가릴 때 쓴다 */
+.rail__item {
+  position: relative;
+  width: 100%;
+  border-left: var(--stroke-md) var(--stroke-solid) transparent;
+  --row-bg: var(--color-surface-base);
+  transition: background var(--duration-fast) var(--easing-base);
+}
+.rail__item:hover:not(.rail__item--on) {
+  background: var(--color-action-neutral-faint);
+  --row-bg: var(--color-action-neutral-faint);
+}
+.rail__item--on {
+  border-left-color: var(--color-border-brand);
+  background: var(--color-action-brand-selected);
+  --row-bg: var(--color-action-brand-selected);
+}
+.rail__item-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-sm);
+  width: 100%;
+  padding: var(--space-inset-md) var(--space-inset-lg) var(--space-inset-md) var(--space-inset-xl);
+  text-align: left;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-body);
+  cursor: pointer;
+}
+.rail__item--on .rail__item-btn {
+  color: var(--color-text-brand);
+  font-weight: var(--font-weight-heading);
+}
+.rail__item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 상태 표시 — 색만으로 가르지 않도록 도형도 함께 다르다(accessibility.md) */
+.rail__state {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+}
+.rail__state--active { border-radius: var(--radius-pill); background: var(--color-text-success); }
+.rail__state--draft  { border-radius: var(--radius-pill); border: 1.5px var(--stroke-solid) var(--color-text-brand); }
+.rail__state--ended  { border-radius: 1px; background: var(--color-text-subtle); }
+
+/* 원본 링크 — 자리를 차지하지 않도록 행 위에 겹쳐 두고 hover 때만 드러낸다 */
+.rail__source {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding-inline: var(--space-inset-lg);
+  background: var(--row-bg);
+  color: var(--color-text-brand);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--easing-base);
+}
+.rail__item:hover .rail__source,
+.rail__variants:hover .rail__source,
+.rail__source:focus-visible { opacity: 1; }
+
+/* 시안 A/B 전환 줄 */
+.rail__variants {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-xs);
+  width: 100%;
+  padding: var(--space-inset-md) var(--space-inset-2xl) var(--space-inset-md) var(--space-inset-3xl);
+  background: var(--color-surface-brand-subtle);
+  --row-bg: var(--color-surface-brand-subtle);
+}
+.rail__variants-caption {
+  flex-shrink: 0;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-subtle);
+}
+
+.rail__foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-gap-md);
+  padding: var(--space-inset-md) var(--space-inset-lg);
+  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-subtle);
+}
+.rail__legend-item { display: flex; align-items: center; gap: var(--space-gap-xs); }
+.rail__position {
+  padding: var(--space-inset-md) var(--space-inset-lg);
+  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-subtle);
+  text-align: center;
+  font-size: var(--font-size-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-subtle);
+}
+
+/* 운영종료 보기 토글 — 개수를 띄우므로 badge 모양을 쓴다 */
+.rail__filter { cursor: pointer; transition: background var(--duration-fast) var(--easing-base); }
+.rail__filter:hover { background: var(--color-action-neutral-hover); }
+
+/* ── 미리보기 무대 ───────────────────────── */
+/* 네이버 메일 창을 올려 두는 바닥. 창 자체는 이 규칙 밖이다 */
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+  gap: var(--space-gap-lg);
+  padding: var(--space-generic-xl) var(--space-generic-lg);
+  background: var(--color-surface-subtle);
+}
+.stage__notice { width: 100%; max-width: 900px; }
+
+.app__split-handle {
+  width: var(--space-4);
+  background: var(--color-border-subtle);
+  transition: background var(--duration-fast) var(--easing-base);
+}
+.app__split-handle:hover { background: var(--color-border-brand); }
+
+/* 화면 아래 고정 안내 */
+.app__footnote {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-inset-md) var(--space-inset-2xl);
+  pointer-events: none;
+}
+.app__footnote > .banner {
+  max-width: 720px;
+  pointer-events: auto;
+  box-shadow: var(--shadow-lg);
+}
+.app__footnote code {
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-base);
+  font-size: var(--font-size-meta);
+}
+.app__footnote pre {
+  margin: var(--space-stack-sm) 0 0;
+  padding: var(--space-inset-lg);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-base);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-reading);
+  white-space: pre-wrap;
+}
+
+/* ── 코드 패널 ───────────────────────────── */
+/* 코드는 어두운 면 위에서 읽는 관행을 따르되, 색은 전부 토큰에서 가져온다.
+   밝은 면을 쓰면 구문 색 7가지를 흰 배경에서 4.5:1로 맞춰야 하는데
+   토큰의 -600 계열만으로는 서로 구분이 안 된다. */
+.code {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-gray-950);
+}
+.code__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-sm);
+  flex-shrink: 0;
+  padding: var(--space-inset-md) var(--space-inset-xl);
+  background: var(--color-gray-900);
+  border-bottom: var(--stroke-sm) var(--stroke-solid) var(--color-border-inverse-subtle);
+}
+.code__file {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-inverse-alpha);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.code__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-gap-md);
+  flex-shrink: 0;
+  padding: var(--space-inset-sm) var(--space-inset-xl);
+  background: var(--color-gray-900);
+  border-top: var(--stroke-sm) var(--stroke-solid) var(--color-border-inverse-subtle);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-ui);
+}
+.code__count { display: flex; align-items: center; gap: var(--space-gap-xs); }
+.code__dot { width: 6px; height: 6px; border-radius: var(--radius-pill); background: currentColor; }
+.code__body { flex: 1; min-height: 0; }
+
+/* ── 디자인 시스템이 다루지 않는 자리 ──────
+   아래 세 가지는 스펙에 없는 조합이라 여기서 메운다. 토큰만 쓴다.
+   디자인 시스템에 올릴 거리: (1) 아이콘+글자 Segment, (2) 어두운 면 위의 버튼 비활성. */
+
+/* (1) Segment 아이템에 아이콘을 넣은 경우 — 스펙의 Segment는 글자 전용이라 gap이 없다 */
+.segment__item { gap: var(--space-gap-2xs); }
+
+/* (2) 어두운 바 위의 비활성 버튼 — btn--inactive 의 회색 면은 밝은 배경 기준이라
+       어두운 바에서 밝게 튄다. 면을 지우고 색만 낮춘다. */
+.code__bar .btn--inactive {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-disabled);
+}
+/* 어두운 면 위 ghost-inverse 버튼의 hover 는 흰색 계열을 쓴다 */
+.code__bar .btn--ghost-inverse:hover { background: var(--color-action-light-hover); }
+
+/* 토스트 — components/molecules/toast.md. sonner 가 그리는 카드에 토큰을 입힌다 */
+.kbz-toast {
+  box-shadow: var(--shadow-xl) !important;
+  font-family: var(--font-family-base) !important;
+  font-size: var(--font-size-base) !important;
+  line-height: var(--line-height-reading) !important;
+  padding: var(--space-inset-xl) !important;
+}

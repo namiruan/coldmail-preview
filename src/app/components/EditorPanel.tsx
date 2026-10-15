@@ -1,6 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
 
-const NAVER_GREEN = '#03c75a';
 import { Copy, Check, RotateCcw, GitBranch } from 'lucide-react';
 import { toast } from 'sonner';
 import CodeMirror from '@uiw/react-codemirror';
@@ -345,98 +344,109 @@ function DiagnosticBar({ code }: { code: string }) {
     return { errors, warnings, infos };
   }, [code]);
 
+  const ok = !counts.errors && !counts.warnings && !counts.infos;
   return (
-    <div className="flex items-center gap-3 text-[10px]">
+    <div className="code__status">
       {counts.errors > 0 && (
-        <span className="flex items-center gap-1" style={{ color: '#f85149' }}>
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: '#f85149' }} />
-          오류 {counts.errors}
+        <span className="code__count" style={{ color: 'var(--color-red-400)' }}>
+          <span className="code__dot" />오류 {counts.errors}
         </span>
       )}
       {counts.warnings > 0 && (
-        <span className="flex items-center gap-1" style={{ color: '#e3b341' }}>
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: '#e3b341' }} />
-          경고 {counts.warnings}
+        <span className="code__count" style={{ color: 'var(--color-orange-300)' }}>
+          <span className="code__dot" />경고 {counts.warnings}
         </span>
       )}
       {counts.infos > 0 && (
-        <span className="flex items-center gap-1" style={{ color: '#58a6ff' }}>
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: '#58a6ff' }} />
-          정보 {counts.infos}
+        <span className="code__count" style={{ color: 'var(--color-blue-300)' }}>
+          <span className="code__dot" />정보 {counts.infos}
         </span>
       )}
-      {counts.errors === 0 && counts.warnings === 0 && counts.infos === 0 && (
-        <span className="flex items-center gap-1" style={{ color: NAVER_GREEN }}>
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: NAVER_GREEN }} />
-          문제 없음
+      {ok && (
+        <span className="code__count" style={{ color: 'var(--color-green-300)' }}>
+          <span className="code__dot" />문제 없음
         </span>
       )}
     </div>
   );
 }
 
-/* ── CodeMirror 통합 테마 ──
-   .tok-* 클래스를 직접 오버라이드해 syntaxHighlighting 비활성화 없이도
-   최소 컬러만 남기고 오류 밑줄을 확실히 표시합니다.
+/* ── CodeMirror 테마 ──
+   코드는 어두운 면 위에서 읽는 관행을 따르되, 색은 전부 김반장 3.0 토큰에서
+   가져온다. 밝은 면이면 구문 색을 흰 배경에서 4.5:1로 맞춰야 하는데
+   -600 계열만으로는 서로 구분이 안 된다.
+   .tok-* 를 직접 덮어 태그명·문자열 두 가지만 남기고 나머지는 본문색으로 통일한다.
 */
+const INK      = 'var(--color-gray-200)';   /* 본문 */
+const INK_DIM  = 'var(--color-gray-500)';   /* 주석·줄번호 */
+const PANEL    = 'var(--color-gray-950)';
+const PANEL_UP = 'var(--color-gray-900)';   /* 활성 줄·툴팁 */
+const LINE     = 'var(--color-border-inverse-subtle)';  /* 어두운 면 위 구분선 */
+const TAG      = 'var(--color-blue-300)';
+const STR      = 'var(--color-cyan-300)';
+const CARET    = 'var(--color-blue-400)';
+const SELECT   = 'var(--color-blue-800)';
+const ERROR    = 'var(--color-red-400)';
+const WARN     = 'var(--color-orange-300)';
+const INFO     = 'var(--color-blue-300)';
+
 const editorTheme = EditorView.theme({
   /* 베이스 */
-  '&': { backgroundColor: '#0d1117', color: '#c9d1d9', height: '100%', fontSize: '13px' },
+  '&': { backgroundColor: PANEL, color: INK, height: '100%', fontSize: 'var(--font-size-sm)' },
   '&.cm-focused': { outline: 'none' },
-  '.cm-scroller': { backgroundColor: '#0d1117', fontFamily: '"Fira Code","JetBrains Mono",Consolas,monospace' },
-  '.cm-content': { caretColor: '#58a6ff', padding: '12px 0' },
-  '.cm-gutters': { backgroundColor: '#0d1117', borderRight: '1px solid #21262d', color: '#484f58' },
-  '.cm-lineNumbers .cm-gutterElement': { paddingRight: '16px', paddingLeft: '8px' },
-  '.cm-activeLine': { backgroundColor: '#161b22' },
-  '.cm-activeLineGutter': { backgroundColor: '#161b22' },
-  '.cm-selectionBackground': { backgroundColor: '#3b5070 !important' },
-  '&.cm-focused .cm-selectionBackground': { backgroundColor: '#264f78 !important' },
-  '.cm-cursor,.cm-dropCursor': { borderLeftColor: '#58a6ff' },
-  '.cm-matchingBracket': { backgroundColor: '#264f78', outline: 'none' },
+  '.cm-scroller': { backgroundColor: PANEL, fontFamily: '"Fira Code","JetBrains Mono",Consolas,monospace' },
+  '.cm-content': { caretColor: CARET, padding: 'var(--space-12) 0' },
+  '.cm-gutters': { backgroundColor: PANEL, borderRight: `1px solid ${LINE}`, color: INK_DIM },
+  '.cm-lineNumbers .cm-gutterElement': { paddingRight: 'var(--space-16)', paddingLeft: 'var(--space-8)' },
+  '.cm-activeLine': { backgroundColor: PANEL_UP },
+  '.cm-activeLineGutter': { backgroundColor: PANEL_UP },
+  '.cm-selectionBackground': { backgroundColor: `${SELECT} !important` },
+  '&.cm-focused .cm-selectionBackground': { backgroundColor: `${SELECT} !important` },
+  '.cm-cursor,.cm-dropCursor': { borderLeftColor: CARET },
+  '.cm-matchingBracket': { backgroundColor: SELECT, outline: 'none' },
 
-  /* ── 문법 강조: 태그명·문자열 2가지만, 나머지는 기본색으로 통일 ── */
-  '.tok-tagName':                     { color: '#79c0ff !important' },
-  '.tok-typeName':                    { color: '#79c0ff !important' },
-  '.tok-string':                      { color: '#a5d6ff !important' },
-  '.tok-attributeValue':              { color: '#a5d6ff !important' },
-  '.tok-comment':                     { color: '#484f58 !important', fontStyle: 'italic' },
-  /* 나머지 모두 기본색으로 덮어쓰기 */
-  '.tok-attributeName':               { color: '#c9d1d9 !important' },
-  '.tok-angleBracket':                { color: '#c9d1d9 !important' },
-  '.tok-operator':                    { color: '#c9d1d9 !important' },
-  '.tok-punctuation':                 { color: '#c9d1d9 !important' },
-  '.tok-meta':                        { color: '#c9d1d9 !important' },
-  '.tok-keyword':                     { color: '#c9d1d9 !important' },
-  '.tok-propertyName':                { color: '#c9d1d9 !important' },
-  '.tok-number':                      { color: '#c9d1d9 !important' },
-  '.tok-unit':                        { color: '#c9d1d9 !important' },
-  '.tok-color':                       { color: '#c9d1d9 !important' },
-  '.tok-variableName':                { color: '#c9d1d9 !important' },
-  '.tok-name':                        { color: '#c9d1d9 !important' },
-  '.tok-docComment':                  { color: '#484f58 !important', fontStyle: 'italic' },
+  /* ── 문법 강조: 태그명·문자열 2가지만, 나머지는 본문색으로 통일 ── */
+  '.tok-tagName':        { color: `${TAG} !important` },
+  '.tok-typeName':       { color: `${TAG} !important` },
+  '.tok-string':         { color: `${STR} !important` },
+  '.tok-attributeValue': { color: `${STR} !important` },
+  '.tok-comment':        { color: `${INK_DIM} !important`, fontStyle: 'italic' },
+  '.tok-docComment':     { color: `${INK_DIM} !important`, fontStyle: 'italic' },
+  '.tok-attributeName':  { color: `${INK} !important` },
+  '.tok-angleBracket':   { color: `${INK} !important` },
+  '.tok-operator':       { color: `${INK} !important` },
+  '.tok-punctuation':    { color: `${INK} !important` },
+  '.tok-meta':           { color: `${INK} !important` },
+  '.tok-keyword':        { color: `${INK} !important` },
+  '.tok-propertyName':   { color: `${INK} !important` },
+  '.tok-number':         { color: `${INK} !important` },
+  '.tok-unit':           { color: `${INK} !important` },
+  '.tok-color':          { color: `${INK} !important` },
+  '.tok-variableName':   { color: `${INK} !important` },
+  '.tok-name':           { color: `${INK} !important` },
 
   /* ── 오류/경고 밑줄 ── */
-  '.cm-lintRange-error':   { backgroundImage: 'none !important', borderBottom: '2px solid #f85149' },
-  '.cm-lintRange-warning': { backgroundImage: 'none !important', borderBottom: '2px solid #e3b341' },
-  '.cm-lintRange-info':    { backgroundImage: 'none !important', borderBottom: '1px dashed #58a6ff' },
+  '.cm-lintRange-error':   { backgroundImage: 'none !important', borderBottom: `var(--stroke-md) solid ${ERROR}` },
+  '.cm-lintRange-warning': { backgroundImage: 'none !important', borderBottom: `var(--stroke-md) solid ${WARN}` },
+  '.cm-lintRange-info':    { backgroundImage: 'none !important', borderBottom: `var(--stroke-sm) dashed ${INFO}` },
 
   /* lint gutter */
-  '.cm-gutter-lint .cm-gutterElement': { paddingTop: '2px' },
-  '.cm-lint-marker-error':   { color: '#f85149' },
-  '.cm-lint-marker-warning': { color: '#e3b341' },
-  '.cm-lint-marker-info':    { color: '#58a6ff' },
+  '.cm-gutter-lint .cm-gutterElement': { paddingTop: 'var(--space-2)' },
+  '.cm-lint-marker-error':   { color: ERROR },
+  '.cm-lint-marker-warning': { color: WARN },
+  '.cm-lint-marker-info':    { color: INFO },
 
   /* tooltip */
   '.cm-tooltip': {
-    backgroundColor: '#1c2128', border: '1px solid #30363d',
-    borderRadius: '6px', color: '#e6edf3', fontSize: '12px',
+    backgroundColor: PANEL_UP, border: `1px solid ${LINE}`,
+    borderRadius: 'var(--radius-md)', color: INK, fontSize: 'var(--font-size-label)',
   },
   '.cm-tooltip-lint': {
-    backgroundColor: '#1c2128', border: '1px solid #30363d', borderRadius: '6px',
+    backgroundColor: PANEL_UP, border: `1px solid ${LINE}`, borderRadius: 'var(--radius-md)',
   },
-  '.cm-diagnostic-error':   { borderLeft: '3px solid #f85149 !important', paddingLeft: '6px' },
-  '.cm-diagnostic-warning': { borderLeft: '3px solid #e3b341 !important', paddingLeft: '6px' },
-  '.cm-diagnostic-info':    { borderLeft: '3px solid #58a6ff !important', paddingLeft: '6px' },
+  '.cm-diagnostic-error':   { borderLeft: `3px solid ${ERROR} !important`, paddingLeft: 'var(--space-6)' },
+  '.cm-diagnostic-warning': { borderLeft: `3px solid ${WARN} !important`, paddingLeft: 'var(--space-6)' },
+  '.cm-diagnostic-info':    { borderLeft: `3px solid ${INFO} !important`, paddingLeft: 'var(--space-6)' },
 }, { dark: true });
 
 
@@ -476,38 +486,38 @@ export function EditorPanel({
     }
   }, [code]);
 
-  const btn = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-colors';
   return (
-    <div className="flex flex-col h-full" style={{ background: '#0d1117' }}>
-      <div
-        className="flex items-center gap-1.5 px-3 py-2 shrink-0"
-        style={{ borderBottom: '1px solid #21262d' }}
-      >
-        <span className="text-[11px] font-mono truncate" style={{ color: '#8b949e' }}>
-          {fileName}
-        </span>
-        {dirty && (
-          <span className="text-[10px] px-1 rounded" style={{ background: '#3a2a1a', color: '#e3b341' }}>
-            수정됨
-          </span>
-        )}
-        <div className="flex-1" />
-        <button onClick={onReset} disabled={!dirty} title="원본 코드로 되돌리기"
-          className={btn} style={{ color: dirty ? '#8b949e' : '#30363d' }}>
-          <RotateCcw className="w-3.5 h-3.5" />초기화
+    <div className="code">
+      <div className="code__bar">
+        <span className="code__file">{fileName}</span>
+        {dirty && <span className="badge badge--caution">수정됨</span>}
+        <div style={{ flex: 1 }} />
+        <button
+          onClick={onReset}
+          disabled={!dirty}
+          title="원본 코드로 되돌리기"
+          className={`btn btn--ghost-inverse btn--xs${dirty ? '' : ' btn--inactive'}`}
+        >
+          <RotateCcw className="ico-badge" />초기화
         </button>
-        <button onClick={handleCopy} title="메일에 붙여 넣을 코드를 복사합니다 — 보이는 코드가 곧 발송 코드입니다" className={btn} style={{ color: '#8b949e' }}>
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+        <button
+          onClick={handleCopy}
+          title="메일에 붙여 넣을 코드를 복사합니다 — 보이는 코드가 곧 발송 코드입니다"
+          className="btn btn--ghost-inverse btn--xs"
+        >
+          {copied ? <Check className="ico-badge" /> : <Copy className="ico-badge" />}
           {copied ? '복사됨' : '복사'}
         </button>
-        <button onClick={onCommit} className={btn}
+        <button
+          onClick={onCommit}
           title="코드를 복사하고 GitHub에서 이 파일을 엽니다"
-          style={{ background: '#238636', color: '#fff' }}>
-          <GitBranch className="w-3.5 h-3.5" />커밋
+          className="btn btn--primary btn--xs"
+        >
+          <GitBranch className="ico-badge" />커밋
         </button>
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="code__body">
         <CodeMirror
           value={code}
           onChange={onChange}

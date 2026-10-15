@@ -8,6 +8,7 @@ Gmail 스타일 셸 안에 HTML을 렌더링해서, 보내기 전에 레이아�
 - 데스크톱 / 모바일 뷰 전환
 - 라이트 모드 + **Gmail 자동 다크모드 시뮬레이션** (`color-scheme` 선언이 없는 메일을 Gmail이 반전시키는 동작을 근사)
 - `<title>` 태그에서 메일 제목 자동 추출
+- 화면은 [김반장 3.0 디자인 시스템](https://github.com/namiruan/kbz_3.0_ui_stytem)을 따릅니다
 
 ## 화면
 
@@ -41,6 +42,7 @@ npm run dev      # http://localhost:5173
 | `npm run preview` | 빌드 결과물을 로컬에서 서빙 |
 | `npm run typecheck` | `tsc --noEmit` 타입 검사 |
 | `npm run validate` | `templates/README.md` 검증 |
+| `npm run sync:kbz` | 김반장 3.0 디자인 시스템 토큰·컴포넌트 다시 받기 |
 
 ## 배포
 
@@ -69,7 +71,10 @@ src/
       parseTemplatesDoc.js     그 문서의 표를 읽는 파서 (검증 스크립트와 공용)
       utm.ts                   문서에 적는 UTM 값의 타입 (문서↔파일 대조용)
       repo.ts                  GitHub 링크 (읽기 · 편집)
-  styles/                      Tailwind v4 + 테마 토큰
+  styles/
+    kbz/tokens.css             김반장 3.0 토큰 (자동 생성 — 고치지 않는다)
+    kbz/components.css         쓰는 컴포넌트 CSS (자동 생성 — 고치지 않는다)
+    app.css                    이 앱의 화면. 위 토큰만 쓴다
 ```
 
 템플릿을 추가하거나 고치려면 `templates/` 의 `.html` 파일을 편집하고 커밋합니다.
@@ -156,6 +161,52 @@ A/B: 단일홍보 본문도 다름 · 26.04.02~26.04.06 제목만 다름
 
 제목은 HTML의 `<title>` 에서 읽습니다. `<title>` 이 없으면 비워 둡니다.
 
+## 디자인 시스템
+
+화면은 [김반장 3.0 디자인 시스템](https://github.com/namiruan/kbz_3.0_ui_stytem)을 따릅니다.
+색·간격·크기·서체는 전부 토큰에서 가져옵니다 — **이 저장소에서 새 색값을 정하지 않습니다.**
+
+```bash
+npm run sync:kbz                      # GitHub main 에서 받기
+node scripts/sync-kbz.mjs ../kbz_3.0_ui_stytem   # 로컬 체크아웃에서 받기
+```
+
+받아 오는 것은 두 가지입니다.
+
+| 파일 | 내용 |
+| --- | --- |
+| `src/styles/kbz/tokens.css` | 토큰 번들 **원본 그대로** |
+| `src/styles/kbz/components.css` | 쓰는 컴포넌트의 CSS만. 각 스펙 문서의 ` ```css ` 블록에서 뽑습니다 |
+
+쓰는 컴포넌트는 Button · Badge · Segment · ActionGroup · Banner · Toast 입니다.
+늘어나면 `scripts/sync-kbz.mjs` 의 `COMPONENTS` 목록에 적고 다시 받습니다.
+
+### 이 규칙 밖에 있는 것
+
+- **네이버 메일 미리보기**(`DesktopEmailClient` · `MobileEmailClient`) — 네이버 UI를
+  흉내 내는 것이 목적이라 네이버 색을 그대로 씁니다.
+- **코드 에디터 안쪽** — 어두운 면 위에서 코드를 읽는 관행을 따릅니다. 색은
+  김반장 팔레트(`--color-gray-950`·`--color-blue-300` 등)에서 가져오되, 밝은 면이
+  아니라 어두운 면 위에서 씁니다. 밝은 면이면 구문 색을 흰 배경에서 4.5:1로
+  맞춰야 하는데 `-600` 계열만으로는 서로 구분이 안 됩니다.
+
+### 디자인 시스템이 아직 다루지 않는 것
+
+`src/styles/app.css` 맨 아래에 모아 두었습니다. 토큰만 써서 메웁니다.
+
+- **아이콘+글자 Segment** — 스펙의 Segment는 글자 전용이라 아이콘 간격(gap)이 없습니다.
+- **어두운 면 위의 버튼 비활성** — `btn--inactive` 의 회색 면은 밝은 배경 기준이라
+  어두운 바에서 밝게 튑니다.
+- **아이콘** — 디자인 시스템 아이콘 63개 중 이 화면에 필요한 Mail·Monitor·Smartphone·
+  Sun·Moon·Code·GitBranch 가 없어 lucide를 씁니다. 크기·색만 토큰(`--icon-*`)을 따릅니다.
+
+### 다크 모드
+
+디자인 시스템에 다크 테마가 없으므로 **앱 화면은 항상 밝은 면**입니다.
+머리말의 `라이트`·`다크` 전환은 **메일 클라이언트 미리보기에만** 적용됩니다 —
+Gmail이 다크모드에서 메일을 어떻게 반전하는지 보는 것이 그 토글의 일이고,
+앱 화면까지 같이 어두워질 이유는 없습니다.
+
 ## 이 저장소와 Figma Make
 
 이 코드는 Figma Make에서 한 번 내보낸 뒤로 **git이 유일한 원본(source of truth)** 입니다.
@@ -168,4 +219,7 @@ A/B: 단일홍보 본문도 다름 · 26.04.02~26.04.06 제목만 다름
 
 ## 기술 스택
 
-React 18 · Vite 6 · TypeScript · Tailwind CSS v4 · shadcn/ui (Radix) · react-router · CodeMirror
+React 18 · Vite 6 · TypeScript · react-router · CodeMirror
+
+화면은 [김반장 3.0 디자인 시스템](https://github.com/namiruan/kbz_3.0_ui_stytem)의
+토큰·컴포넌트를 씁니다. Tailwind는 레이아웃 유틸리티로만 남아 있습니다.

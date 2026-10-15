@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, Fragment } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef, Fragment } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Monitor, Smartphone, Check, Mail,
@@ -22,41 +22,115 @@ const EMAIL_META = {
   date: '2026년 3월 30일 (월) 오전 10:24',
 };
 
+const STATUS_LABEL = { active: '사용중', draft: '미사용', ended: '운영종료' } as const;
+
 /**
- * 목록 왼쪽의 상태 표시. 색만으로 가르면 색각 이상인 사람이 구분하지 못하므로
- * 도형도 함께 다르게 둔다 — 채운 원 / 빈 원 / 네모.
+ * 상태별 표시 규칙. 운영종료는 끝난 것이라 목록에서 숨기지만,
+ * 미사용은 띄우기 전에 검토할 대상이라 그대로 보여준다.
+ * tone 은 Banner·Badge 의 디자인 시스템 변형 이름이다.
  */
-const STATUS_DOT = {
-  active: { shape: 'circle', fill: true,  tone: (d: boolean) => (d ? '#4ade80' : '#34c76a') },
-  draft:  { shape: 'circle', fill: false, tone: (d: boolean) => (d ? '#60a5fa' : '#3b82f6') },
-  ended:  { shape: 'square', fill: true,  tone: (d: boolean) => (d ? '#6b7280' : '#9ca3af') },
+const STATUS_UI = {
+  active: null,
+  draft: {
+    label: '미사용',
+    hidden: false,
+    tone: '',               /* banner 기본값 = info */
+    notice: '내용을 확인한 뒤 문서에서 상태를 "사용중"으로 바꾸세요.',
+  },
+  ended: {
+    label: '운영종료',
+    hidden: true,
+    tone: 'caution',
+    notice: '설정은 그대로 남아 있지만 집행이 끝난 시안이니 발송 전에 확인하세요.',
+  },
 } as const;
 
-const STATUS_LABEL = { active: '사용중', draft: '미사용', ended: '운영종료' } as const;
+/* ══════════════════════════════════════════
+   디자인 시스템 컴포넌트
+   클래스는 src/styles/kbz/components.css — 스펙 문서에서 그대로 받아온다.
+══════════════════════════════════════════ */
+
+/**
+ * Segment (components/atoms/segment.md)
+ * 선택 칸을 따라 미끄러지는 배경은 JS가 위치·폭을 재서 옮긴다.
+ */
+function Segment<T extends string>({
+  options, value, onChange, label,
+}: {
+  options: { value: T; icon?: React.ReactNode; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [slider, setSlider] = useState({ x: 0, w: 0 });
+
+  useEffect(() => {
+    const el = ref.current?.querySelector<HTMLElement>('[data-on="true"]');
+    if (el) setSlider({ x: el.offsetLeft, w: el.offsetWidth });
+  }, [value, options.length]);
+
+  return (
+    <div ref={ref} className="segment" role="group" aria-label={label}>
+      <span
+        className="segment__slider"
+        style={{ transform: `translateX(${slider.x}px)`, width: slider.w }}
+      />
+      {options.map(o => {
+        const on = o.value === value;
+        return (
+          <button
+            key={o.value}
+            data-on={on}
+            onClick={() => onChange(o.value)}
+            aria-pressed={on}
+            className={`segment__item${on ? ' segment__item--selected' : ''}`}
+          >
+            {o.icon}
+            <span>{o.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Banner (components/molecules/banner.md)
+ * tone 이 빈 문자열이면 기본값(info).
+ */
+function Banner({
+  tone, icon, children, className = '',
+}: {
+  tone?: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`banner${tone ? ` banner--${tone}` : ''} ${className}`} role="status">
+      <span className="banner__icon icon--md">{icon}</span>
+      <div className="banner__body">{children}</div>
+    </div>
+  );
+}
 
 /** 목록에서 선택된 항목 아래에 붙는 시안 전환 줄. */
 function VariantRow({
-  caption, options, selected, onSelect, isDark, href, hrefTitle, hrefLabel,
+  caption, options, selected, onSelect, href, hrefTitle, hrefLabel,
 }: {
   caption: string;
   /** key는 선택 식별용, label은 화면에 찍히는 글자(A·B)다. */
   options: { key: string; label?: string; title?: string }[];
   selected?: string;
   onSelect: (key: string) => void;
-  isDark: boolean;
   href: string;
   hrefTitle: string;
   hrefLabel: string;
 }) {
-  const bg = isDark ? '#15202e' : '#f8fbff';
   return (
-    <div
-      className="group/sub relative w-full flex items-center gap-1 pl-7 pr-8 py-1.5"
-      style={{ background: bg, ['--row-bg' as string]: bg } as React.CSSProperties}
-    >
-      <span className="text-[11px] shrink-0" style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>
-        {caption}
-      </span>
+    <div className="rail__variants">
+      <span className="rail__variants-caption">{caption}</span>
       {options.map(o => {
         const on = o.key === selected;
         return (
@@ -65,11 +139,8 @@ function VariantRow({
             onClick={() => onSelect(o.key)}
             title={o.title}
             aria-pressed={on}
-            className="px-2 py-0.5 rounded text-[11px] font-medium transition-all"
-            style={{
-              background: on ? (isDark ? '#2d4a6b' : '#dbeafe') : 'transparent',
-              color: on ? (isDark ? '#bfdbfe' : '#1d4ed8') : (isDark ? '#6b7280' : '#9ca3af'),
-            }}
+            className={`badge ${on ? 'badge--fill badge--brand' : 'badge--line badge--brand'}`}
+            style={{ cursor: on ? 'default' : 'pointer' }}
           >
             {(o.label ?? o.key).toUpperCase()}
           </button>
@@ -81,43 +152,19 @@ function VariantRow({
         rel="noopener noreferrer"
         title={hrefTitle}
         aria-label={hrefLabel}
-        className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover/sub:opacity-100 focus:opacity-100 focus:outline-none"
-        style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
+        className="rail__source"
       >
-        <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
+        <FileCode2 className="ico-sm" />
       </a>
     </div>
   );
 }
-
-/**
- * 상태별 표시 규칙. 운영종료는 끝난 것이라 목록에서 숨기지만,
- * 미사용은 띄우기 전에 검토할 대상이라 그대로 보여준다.
- */
-const STATUS_UI = {
-  active: null,
-  draft: {
-    label: '미사용',
-    hidden: false,
-    dim: 0.75,
-    tone: (d: boolean) => ({ bg: d ? '#2a3340' : '#eff6ff', fg: d ? '#93c5fd' : '#1d4ed8', border: d ? '#3a4a5e' : '#bfdbfe' }),
-    notice: '내용을 확인한 뒤 문서에서 상태를 "사용중"으로 바꾸세요.',
-  },
-  ended: {
-    label: '운영종료',
-    hidden: true,
-    dim: 0.45,
-    tone: (d: boolean) => ({ bg: d ? '#3a2a2a' : '#fef2f2', fg: d ? '#fca5a5' : '#b91c1c', border: d ? '#5a3a3a' : '#fecaca' }),
-    notice: '설정은 그대로 남아 있지만 집행이 끝난 시안이니 발송 전에 확인하세요.',
-  },
-} as const;
 
 function getSubject(html: string): string {
   const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   return match ? match[1].trim() : '콜드메일 시안';
 }
 
-/** 라이트 모드 – 원본 그대로 */
 /**
  * 미리보기 iframe 전용 래퍼. srcDoc 은 완전한 문서를 요구한다.
  * 내보내는 코드에는 쓰지 않는다 — 템플릿이 이미 완전한 문서라 두 겹이 된다.
@@ -179,49 +226,41 @@ function buildFixedDarkHtml(html: string, css: string): string {
 </html>`;
 }
 
-/** 템플릿 HTML에 color-scheme: light only 선언이 는지 확인 */
+/** 템플릿 HTML에 color-scheme: light only 선언이 있는지 확인 */
 function hasColorSchemeFix(html: string): boolean {
   return /color-scheme/i.test(html) && /light[\s]+only/i.test(html);
 }
 
-/* ── Info Banner ── */
+/* ── 화면 아래 고정 안내 ── */
 function DarkModeBanner({ isDark, isFixed }: { isDark: boolean; isFixed: boolean }) {
   if (!isDark) return null;
 
   if (isFixed) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 py-3 pointer-events-none">
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl max-w-2xl w-full pointer-events-auto"
-          style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', backdropFilter: 'blur(8px)' }}>
-          <Check className="w-4 h-4 mt-0.5 shrink-0 text-green-400" />
-          <div className="text-sm leading-relaxed" style={{ color: '#bbf7d0' }}>
-            <span className="font-semibold">color-scheme: light only 적용됨</span>
-            <span className="opacity-80"> — Gmail이 자동 색상 변환을 건너뜁니다. 원본 색상이 다크모드에서도 그대로 유지되는 모습입니다.</span>
-          </div>
-        </div>
+      <div className="app__footnote">
+        <Banner tone="success" icon={<Check />}>
+          <p className="banner__title">color-scheme: light only 적용됨</p>
+          <p className="banner__message">
+            Gmail이 자동 색상 변환을 건너뜁니다. 원본 색상이 다크모드에서도 그대로 유지되는 모습입니다.
+          </p>
+        </Banner>
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 py-3 pointer-events-none">
-      <div className="flex items-start gap-3 px-4 py-3 rounded-xl max-w-2xl w-full pointer-events-auto"
-        style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', backdropFilter: 'blur(8px)' }}>
-        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-yellow-400" />
-        <div className="text-sm leading-relaxed" style={{ color: '#fde68a' }}>
-          <span className="font-semibold">Gmail 자동 색상 변환 시뮬레이션</span>
-          <span className="opacity-80"> — Gmail은 </span>
-          <code className="bg-yellow-900/40 px-1 rounded text-xs">color-scheme</code>
-          <span className="opacity-80"> 선언이 없는 이메일을 다크모드에서 자동으로 색상 반전합니다. 원본 색상을 유지하려면 이메일 </span>
-          <code className="bg-yellow-900/40 px-1 rounded text-xs">&lt;head&gt;</code>
-          <span className="opacity-80">에 아래 두 줄을 추가하세요.</span>
-          <pre className="mt-2 px-3 py-2 rounded-lg text-xs font-mono leading-relaxed"
-            style={{ background: 'rgba(0,0,0,0.3)', color: '#fef9c3' }}>
+    <div className="app__footnote">
+      <Banner tone="caution" icon={<AlertTriangle />}>
+        <p className="banner__title">Gmail 자동 색상 변환 시뮬레이션</p>
+        <p className="banner__message">
+          Gmail은 <code>color-scheme</code> 선언이 없는 이메일을 다크모드에서 자동으로 색상 반전합니다.
+          원본 색상을 유지하려면 이메일 <code>&lt;head&gt;</code>에 아래 두 줄을 추가하세요.
+        </p>
+        <pre>
 {`<meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light only">`}
-          </pre>
-        </div>
-      </div>
+        </pre>
+      </Banner>
     </div>
   );
 }
@@ -251,7 +290,7 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
 
   /**
    * 분류 → 그룹 → 항목 → 시안 으로 묶는다.
-   * 본문이 다른 A/B(같은 group·label)는 한 항목으로 합쳐 토글로 전환한다.
+   * 같은 group·label 의 시안은 한 항목으로 합쳐 토글로 전환한다.
    * 이름이 같으면 표에서 떨어져 있어도 한 묶음으로 본다. 자리는 처음 나온
    * 위치, 안쪽 순서는 표의 순서를 따른다.
    */
@@ -299,19 +338,18 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
   const toggleGroup = useCallback((name: string) => {
     setCollapsed(prev => {
       const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
+      if (next.has(name)) next.delete(name); else next.add(name);
       return next;
     });
   }, []);
 
   const current = templates.find(t => t.key === activeKey) ?? templates[0];
-
-  /** 편집 중이면 편집본을, 아니면 파일 원본을 쓴다. */
   const sourceHtml = draft ?? current.html;
-
-  const currentIndex = templates.findIndex(t => t.key === activeKey);
   const subject = getSubject(sourceHtml);
 
+  const currentIndex = templates.findIndex(t => t.key === activeKey);
+
+  /** 시안을 바꾸면 편집 중이던 내용은 그 시안의 것이 아니므로 버린다. */
   useEffect(() => { setDraft(null); }, [activeKey]);
 
   useEffect(() => {
@@ -327,6 +365,8 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
     : isFixed
       ? buildFixedDarkHtml(sourceHtml, current.css)
       : buildGmailAutoDarkHtml(sourceHtml, current.css);
+  /* 네이버 메일 미리보기에만 넘기는 값. 앱 화면은 디자인 시스템에 다크 테마가
+     없으므로 항상 밝은 면을 쓴다. */
   const isDark = darkMode;
 
   const goPrev = () => {
@@ -336,101 +376,82 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
     if (currentIndex < templates.length - 1) setActiveKey(templates[currentIndex + 1].key);
   };
 
-  /* ── 사이드 패널 색상 ── */
-  const sideBg     = isDark ? '#16161a' : '#ffffff';
-  const sideBorder = isDark ? '#2a2a2e' : '#e5e7eb';
-  const sideHover  = isDark ? '#22222a' : '#f3f4f6';
-  const sideActive = isDark ? '#1e2d40' : '#eff6ff';
-  const sideActiveBorder = isDark ? '#3b82f6' : '#3b82f6';
+  /** 미리보기 무대 — 상태 안내 + 메일 클라이언트 창. 에디터 유무와 무관하게 같다. */
+  const stage = (
+    <>
+      {STATUS_UI[current.status] && (
+        <Banner
+          tone={STATUS_UI[current.status]!.tone}
+          icon={<AlertTriangle />}
+          className="stage__notice"
+        >
+          <p className="banner__message">
+            <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
+            {STATUS_UI[current.status]!.notice}
+          </p>
+        </Banner>
+      )}
+
+      {device === 'desktop' ? (
+        <DesktopEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
+      ) : (
+        <MobileEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
+      )}
+    </>
+  );
 
   return (
-    <div className={`flex flex-col h-screen transition-colors ${isDark ? 'bg-[#111113]' : 'bg-[#f1f3f4]'}`}>
+    <div className="app">
       {/* ── Top Bar ── */}
-      <header className={`border-b px-5 py-3 flex items-center justify-between shrink-0 transition-colors ${isDark ? 'bg-[#1f1f21] border-[#333]' : 'bg-white border-gray-200'}`}>
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <Mail className="w-5 h-5 text-blue-500" />
-          <span className={`font-semibold text-base ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
-            콜드메일 시안 미리보기
-          </span>
+      <header className="app__header">
+        <div className="app__brand">
+          <Mail className="ico-md" />
+          <span className="app__title">콜드메일 시안 미리보기</span>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-2">
-          {/* Device toggle */}
-          <div className={`flex items-center rounded-lg p-1 gap-1 ${isDark ? 'bg-[#2a2a2e]' : 'bg-gray-100'}`}>
-            {([
-              { value: 'desktop', icon: <Monitor className="w-4 h-4" />, label: 'PC' },
-              { value: 'mobile',  icon: <Smartphone className="w-4 h-4" />, label: '모바일' },
-            ] as const).map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setDevice(opt.value)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all ${
-                  device === opt.value
-                    ? isDark ? 'bg-[#3a3a3e] text-white shadow-sm font-medium' : 'bg-white text-gray-900 shadow-sm font-medium'
-                    : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {opt.icon}<span>{opt.label}</span>
-              </button>
-            ))}
+        <div className="app__tools">
+          <Segment<DeviceMode>
+            label="미리보기 기기"
+            value={device}
+            onChange={setDevice}
+            options={[
+              { value: 'desktop', icon: <Monitor className="ico-sm" />, label: 'PC' },
+              { value: 'mobile',  icon: <Smartphone className="ico-sm" />, label: '모바일' },
+            ]}
+          />
+
+          <Segment
+            label="메일 클라이언트 색 모드"
+            value={darkMode ? 'dark' : 'light'}
+            onChange={v => setDarkMode(v === 'dark')}
+            options={[
+              { value: 'light', icon: <Sun className="ico-sm" />, label: '라이트' },
+              { value: 'dark',  icon: <Moon className="ico-sm" />, label: '다크' },
+            ]}
+          />
+
+          {/* 시안 관리 문서 — 그룹·상태·UTM이 여기서 결정된다. 도구 액션이라 ActionGroup */}
+          <div className="action-group">
+            <a
+              href={blobUrl(DOC_PATH)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="시안 관리 문서 열기 — 그룹·사용 상태·UTM을 여기서 고칩니다"
+              aria-label="시안 관리 문서를 GitHub에서 열기"
+              className="action-btn action-btn--sm action-btn--icon-only"
+            >
+              <Settings className="ico-sm" />
+            </a>
           </div>
 
-          {/* Light / Dark toggle */}
-          <div className={`flex items-center rounded-lg p-1 gap-1 ${isDark ? 'bg-[#2a2a2e]' : 'bg-gray-100'}`}>
-            <button
-              onClick={() => setDarkMode(false)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all ${
-                !darkMode
-                  ? 'bg-white text-gray-900 shadow-sm font-medium'
-                  : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Sun className="w-4 h-4" /><span>라이트</span>
-            </button>
-            <button
-              onClick={() => setDarkMode(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-all ${
-                darkMode
-                  ? 'bg-[#3a3a3e] text-white shadow-sm font-medium'
-                  : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Moon className="w-4 h-4" /><span>다크</span>
-            </button>
-          </div>
-
-          {/* 시안 관리 문서 — 그룹·상태·UTM이 여기서 결정된다 */}
-          <a
-            href={blobUrl(DOC_PATH)}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="시안 관리 문서 열기 — 그룹·사용 상태·UTM을 여기서 고칩니다"
-            aria-label="시안 관리 문서를 GitHub에서 열기"
-            className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
-              isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-[#2a2a2e]'
-                     : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-          </a>
-
-          {/* Live editor button */}
+          {/* 코드를 고치는 것이 이 화면의 핵심 작업이라 primary */}
           <button
             onClick={() => setEditorOpen(v => !v)}
             aria-pressed={editorOpen}
             title={editorOpen ? '에디터 닫기' : '오른쪽에 코드 에디터 열기'}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              editorOpen ? '' : 'text-white'
-            }`}
-            style={editorOpen
-              ? { background: isDark ? '#3a3a3e' : '#e5e7eb', color: isDark ? '#e5e7eb' : '#374151' }
-              : { background: '#03c75a', color: '#fff' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#02b34e'}
-            onMouseLeave={e => e.currentTarget.style.background = '#03c75a'}
+            className={`btn btn--primary btn--sm text-button-sm${editorOpen ? ' btn--solid' : ''}`}
           >
-            <Code2 className="w-4 h-4" />라이브 에디터
+            <Code2 className="ico-sm" />라이브 에디터
           </button>
         </div>
       </header>
@@ -439,35 +460,16 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
       <div className="flex flex-1 overflow-hidden">
 
         {/* ── Left Sidebar: Template List ── */}
-        <aside
-          className="flex flex-col shrink-0 transition-colors"
-          style={{
-            width: 200,
-            background: sideBg,
-            borderRight: `1px solid ${sideBorder}`,
-          }}
-        >
-          {/* 섹션 제목 */}
-          <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-            <span
-              className="text-xs font-semibold tracking-wider uppercase"
-              style={{ color: isDark ? '#555' : '#9ca3af' }}
-            >
-              시안 목록
-            </span>
+        <aside className="rail">
+          <div className="rail__head">
+            <span className="rail__caption">시안 목록</span>
             {pausedCount > 0 && (
               <button
                 onClick={() => setShowPaused(v => !v)}
                 aria-pressed={showPaused}
                 title={showPaused ? '운영종료 시안 숨기기' : `운영종료 시안 ${pausedCount}개 보기`}
-                className="ml-auto px-1.5 py-0.5 rounded text-[10px] transition-colors"
-                style={{
-                  background: showPaused ? (isDark ? '#3a2a2a' : '#fee2e2') : 'transparent',
-                  color: showPaused
-                    ? isDark ? '#fca5a5' : '#b91c1c'
-                    : isDark ? '#555' : '#9ca3af',
-                  border: `1px solid ${showPaused ? 'transparent' : (isDark ? '#2a2a2e' : '#e5e7eb')}`,
-                }}
+                className={`badge rail__filter ${showPaused ? 'badge--fill badge--brand' : 'badge--line badge--neutral'}`}
+                style={{ marginLeft: 'auto' }}
               >
                 운영종료 {pausedCount}
               </button>
@@ -475,255 +477,124 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
           </div>
 
           {/* 위 화살표 */}
-          <div className="px-3 pb-1">
-            <button
-              onClick={goPrev}
-              disabled={currentIndex === 0}
-              className="w-full flex items-center justify-center py-1.5 rounded-md transition-all"
-              style={{
-                background: currentIndex === 0
-                  ? 'transparent'
-                  : isDark ? '#2a2a2e' : '#f3f4f6',
-                color: currentIndex === 0
-                  ? isDark ? '#333' : '#d1d5db'
-                  : isDark ? '#aaa' : '#6b7280',
-                cursor: currentIndex === 0 ? 'default' : 'pointer',
-              }}
-              title="이전 시안"
-            >
-              <ChevronUp className="w-4 h-4" />
+          <div style={{ padding: '0 var(--space-inset-xl) var(--space-inset-sm)' }}>
+            <button onClick={goPrev} disabled={currentIndex === 0} className="rail__step" title="이전 시안">
+              <ChevronUp className="ico-sm" />
             </button>
           </div>
 
           {/* Template List — group별로 묶고, 그룹 제목을 눌러 접는다 */}
-          <div className="flex-1 overflow-y-auto flex flex-col">
-            {sections.map((sec) => (
+          <div className="rail__list">
+            {sections.map(sec => (
               <div key={sec.name}>
                 {/* 대분류 — 콜드메일 / 발신템플릿 */}
-                <div
-                  className="px-3 pt-3 pb-1 text-[10px] font-bold tracking-widest uppercase"
-                  style={{ color: isDark ? '#4b5563' : '#cbd5e1' }}
-                >
-                  {sec.name}
-                </div>
-                {sec.groups.map((g) => {
-              const isCollapsed = collapsed.has(g.name);
-              return (
-                <div key={g.name}>
-                  <button
-                    onClick={() => toggleGroup(g.name)}
-                    className="w-full flex items-center gap-1.5 px-3 py-2 transition-colors"
-                    style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = sideHover; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                    aria-expanded={!isCollapsed}
-                    title={isCollapsed ? `${g.name} 펼치기` : `${g.name} 접기`}
-                  >
-                    <ChevronDown
-                      className="w-3 h-3 shrink-0 transition-transform"
-                      style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none' }}
-                    />
-                    <span className="text-[11px] font-semibold tracking-wide truncate">{g.name}</span>
-                    <span className="ml-auto text-[10px] tabular-nums opacity-60">{g.entries.length}</span>
-                  </button>
+                <div className="rail__section">{sec.name}</div>
 
-                  {!isCollapsed && g.entries.map((entry) => {
-                    // 선택된 시안이 이 항목 안에 있으면 그걸, 아니면 첫 시안을 대표로 쓴다
-                    const shown = entry.variants.find(v => v.key === activeKey) ?? entry.variants[0];
-                    const isActive = entry.variants.some(v => v.key === activeKey);
-                    const hasBodyAB = entry.variants.length > 1;
-                    return (
-                      <Fragment key={`${entry.label}-${entry.variants[0].key}`}>
-                      <div
-                        className="group relative w-full transition-colors"
-                        style={{
-                          borderLeft: isActive ? `2px solid ${sideActiveBorder}` : '2px solid transparent',
-                          background: isActive ? sideActive : 'transparent',
-                          // 아이콘 뒤를 덮어 긴 이름과 겹쳐 보이지 않게 한다
-                          ['--row-bg' as string]: isActive ? sideActive : sideBg,
-                        } as React.CSSProperties}
-                        onMouseEnter={e => {
-                          if (isActive) return;
-                          e.currentTarget.style.background = sideHover;
-                          e.currentTarget.style.setProperty('--row-bg', sideHover);
-                        }}
-                        onMouseLeave={e => {
-                          if (isActive) return;
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.setProperty('--row-bg', sideBg);
-                        }}
+                {sec.groups.map(g => {
+                  const isCollapsed = collapsed.has(g.name);
+                  return (
+                    <div key={g.name}>
+                      <button
+                        onClick={() => toggleGroup(g.name)}
+                        className="rail__group"
+                        aria-expanded={!isCollapsed}
+                        title={isCollapsed ? `${g.name} 펼치기` : `${g.name} 접기`}
                       >
-                        <button
-                          onClick={() => setActiveKey(shown.key)}
-                          title={`${entry.label} — ${STATUS_LABEL[shown.status]}`}
-                          className="w-full text-left pl-5 pr-4 py-2 flex items-center gap-2 transition-colors"
-                          style={{
-                            color: isActive
-                              ? isDark ? '#93c5fd' : '#1d4ed8'
-                              : isDark ? '#888' : '#374151',
-                            fontWeight: isActive ? 600 : 400,
-                          }}
-                        >
-                          {/* 상태 표시 — 자리를 고정해 이름 길이와 무관하게 세로로 정렬된다 */}
-                          <span
-                            aria-hidden
-                            className="shrink-0"
-                            style={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: STATUS_DOT[shown.status].shape === 'circle' ? '50%' : 1,
-                              background: STATUS_DOT[shown.status].fill
-                                ? STATUS_DOT[shown.status].tone(isDark)
-                                : 'transparent',
-                              border: STATUS_DOT[shown.status].fill
-                                ? 'none'
-                                : `1.5px solid ${STATUS_DOT[shown.status].tone(isDark)}`,
-                            }}
-                          />
-                          <span
-                            className="text-xs min-w-0 truncate"
-                            style={{ opacity: STATUS_UI[shown.status]?.dim ?? 1 }}
-                          >
-                            {entry.label}
-                          </span>
-                          <span className="sr-only">{STATUS_LABEL[shown.status]}</span>
-                        </button>
-                        {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다. */}
-                        <a
-                          href={blobUrl(shown.path)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`GitHub에서 원본 열기 — ${shown.path}`}
-                          aria-label={`${shown.name} 원본 소스를 GitHub에서 열기`}
-                          className="group/link absolute right-0 top-0 bottom-0 px-2 flex items-center opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none"
-                          style={{ background: 'var(--row-bg)', color: isDark ? '#93c5fd' : '#1d4ed8' }}
-                        >
-                          <FileCode2 className="w-3.5 h-3.5 opacity-55 transition-opacity group-hover/link:opacity-100" />
-                        </a>
-                      </div>
-
-                      {/* 시안 A/B — 제목만 다른 A/B도 파일이 따로이므로 원본은 해당 .html 로 간다 */}
-                      {isActive && hasBodyAB && (
-                        <VariantRow
-                          caption="시안"
-                          options={entry.variants.map(v => ({ key: v.key, label: v.variant, title: v.name }))}
-                          selected={shown.key}
-                          onSelect={key => {
-                            const next = entry.variants.find(v => v.key === key);
-                            if (next) setActiveKey(next.key);
-                          }}
-                          isDark={isDark}
-                          href={blobUrl(shown.path)}
-                          hrefTitle={`GitHub에서 본문 원본 열기 — ${shown.path}`}
-                          hrefLabel={`${shown.name} 본문 원본을 GitHub에서 열기`}
+                        <ChevronDown
+                          className={`ico-badge shrink-0 rail__chevron${isCollapsed ? ' rail__chevron--collapsed' : ''}`}
                         />
-                      )}
+                        <span className="rail__group-name">{g.name}</span>
+                        <span className="rail__group-count">{g.entries.length}</span>
+                      </button>
 
-                      </Fragment>
-                    );
-                  })}
-                </div>
-              );
+                      {!isCollapsed && g.entries.map(entry => {
+                        // 선택된 시안이 이 항목 안에 있으면 그걸, 아니면 첫 시안을 대표로 쓴다
+                        const shown = entry.variants.find(v => v.key === activeKey) ?? entry.variants[0];
+                        const isActive = entry.variants.some(v => v.key === activeKey);
+                        const hasVariants = entry.variants.length > 1;
+                        return (
+                          <Fragment key={`${entry.label}-${entry.variants[0].key}`}>
+                            <div className={`rail__item${isActive ? ' rail__item--on' : ''}`}>
+                              <button
+                                onClick={() => setActiveKey(shown.key)}
+                                title={`${entry.label} — ${STATUS_LABEL[shown.status]}`}
+                                className="rail__item-btn"
+                              >
+                                {/* 상태 표시 — 자리를 고정해 이름 길이와 무관하게 세로로 정렬된다 */}
+                                <span aria-hidden className={`rail__state rail__state--${shown.status}`} />
+                                <span className="rail__item-name">{entry.label}</span>
+                                <span className="sr-only">{STATUS_LABEL[shown.status]}</span>
+                              </button>
+                              {/* 원본 소스 — 레이아웃을 차지하지 않도록 겹쳐 둔다. */}
+                              <a
+                                href={blobUrl(shown.path)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`GitHub에서 원본 열기 — ${shown.path}`}
+                                aria-label={`${shown.name} 원본 소스를 GitHub에서 열기`}
+                                className="rail__source"
+                              >
+                                <FileCode2 className="ico-sm" />
+                              </a>
+                            </div>
+
+                            {/* 시안 A/B — 제목만 다른 A/B도 파일이 따로이므로 원본은 해당 .html 로 간다 */}
+                            {isActive && hasVariants && (
+                              <VariantRow
+                                caption="시안"
+                                options={entry.variants.map(v => ({ key: v.key, label: v.variant, title: v.name }))}
+                                selected={shown.key}
+                                onSelect={key => {
+                                  const next = entry.variants.find(v => v.key === key);
+                                  if (next) setActiveKey(next.key);
+                                }}
+                                href={blobUrl(shown.path)}
+                                hrefTitle={`GitHub에서 본문 원본 열기 — ${shown.path}`}
+                                hrefLabel={`${shown.name} 본문 원본을 GitHub에서 열기`}
+                              />
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </div>
+                  );
                 })}
               </div>
             ))}
           </div>
 
           {/* 아래 화살표 */}
-          <div className="px-3 pt-1 pb-3">
+          <div style={{ padding: 'var(--space-inset-sm) var(--space-inset-xl) var(--space-inset-xl)' }}>
             <button
               onClick={goNext}
               disabled={currentIndex === templates.length - 1}
-              className="w-full flex items-center justify-center py-1.5 rounded-md transition-all"
-              style={{
-                background: currentIndex === templates.length - 1
-                  ? 'transparent'
-                  : isDark ? '#2a2a2e' : '#f3f4f6',
-                color: currentIndex === templates.length - 1
-                  ? isDark ? '#333' : '#d1d5db'
-                  : isDark ? '#aaa' : '#6b7280',
-                cursor: currentIndex === templates.length - 1 ? 'default' : 'pointer',
-              }}
+              className="rail__step"
               title="다음 시안"
             >
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="ico-sm" />
             </button>
           </div>
 
           {/* 범례 — 설명을 행마다 반복하지 않고 한 곳에 둔다 */}
-          <div
-            className="px-4 py-2 flex items-center justify-center gap-3 text-[10px]"
-            style={{ borderTop: `1px solid ${sideBorder}`, color: isDark ? '#555' : '#9ca3af' }}
-          >
+          <div className="rail__foot">
             {(['active', 'draft', 'ended'] as const).map(k => (
-              <span key={k} className="flex items-center gap-1">
-                <span
-                  aria-hidden
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: STATUS_DOT[k].shape === 'circle' ? '50%' : 1,
-                    background: STATUS_DOT[k].fill ? STATUS_DOT[k].tone(isDark) : 'transparent',
-                    border: STATUS_DOT[k].fill ? 'none' : `1.5px solid ${STATUS_DOT[k].tone(isDark)}`,
-                  }}
-                />
+              <span key={k} className="rail__legend-item">
+                <span aria-hidden className={`rail__state rail__state--${k}`} />
                 {STATUS_LABEL[k]}
               </span>
             ))}
           </div>
 
-          {/* 현재 위치 표시 */}
-          <div
-            className="px-4 py-3 text-[11px] text-center"
-            style={{
-              borderTop: `1px solid ${sideBorder}`,
-              color: isDark ? '#444' : '#9ca3af',
-            }}
-          >
-            {currentIndex + 1} / {templates.length}
-          </div>
+          <div className="rail__position">{currentIndex + 1} / {templates.length}</div>
         </aside>
 
         {/* ── Preview Area ── */}
         {editorOpen ? (
           <PanelGroup direction="horizontal" className="flex-1 overflow-hidden">
             <Panel defaultSize={58} minSize={30}>
-              <div className="h-full overflow-auto flex flex-col items-center py-8 px-6"
-                style={{ background: isDark ? '#07070a' : '#f1f3f4' }}>
-              <div
-                className="flex-1 overflow-auto flex flex-col items-center py-8 px-6"
-                style={{ background: isDark ? '#07070a' : '#f1f3f4' }}
-              >
-                {STATUS_UI[current.status] && (
-                  <div
-                    className="w-full max-w-[900px] mb-4 px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm"
-                    style={{
-                      background: STATUS_UI[current.status]!.tone(isDark).bg,
-                      color: STATUS_UI[current.status]!.tone(isDark).fg,
-                      border: `1px solid ${STATUS_UI[current.status]!.tone(isDark).border}`,
-                    }}
-                    role="status"
-                  >
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>
-                      <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
-                      {STATUS_UI[current.status]!.notice}
-                    </span>
-                  </div>
-                )}
-
-                {device === 'desktop' ? (
-                  <DesktopEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
-                ) : (
-                  <MobileEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
-                )}
-              </div>
-              </div>
+              <div className="stage h-full">{stage}</div>
             </Panel>
-            <PanelResizeHandle
-              className="w-1 transition-colors"
-              style={{ background: isDark ? '#2a2a2e' : '#e5e7eb' }}
-            />
+            <PanelResizeHandle className="app__split-handle" />
             <Panel defaultSize={42} minSize={25}>
               <EditorPanel
                 code={sourceHtml}
@@ -744,38 +615,10 @@ export function EmailPreview({ initialEditorOpen = false }: { initialEditorOpen?
             </Panel>
           </PanelGroup>
         ) : (
-            <main
-              className="flex-1 overflow-auto flex flex-col items-center py-8 px-6"
-              style={{ background: isDark ? '#07070a' : '#f1f3f4' }}
-            >
-              {STATUS_UI[current.status] && (
-                <div
-                  className="w-full max-w-[900px] mb-4 px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm"
-                  style={{
-                    background: STATUS_UI[current.status]!.tone(isDark).bg,
-                    color: STATUS_UI[current.status]!.tone(isDark).fg,
-                    border: `1px solid ${STATUS_UI[current.status]!.tone(isDark).border}`,
-                  }}
-                  role="status"
-                >
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>
-                    <strong>{STATUS_UI[current.status]!.label} 시안</strong>입니다.{' '}
-                    {STATUS_UI[current.status]!.notice}
-                  </span>
-                </div>
-              )}
-
-              {device === 'desktop' ? (
-                <DesktopEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
-              ) : (
-                <MobileEmailClient subject={subject} iframeDoc={iframeDoc} isDark={isDark} />
-              )}
-            </main>
+          <main className="stage">{stage}</main>
         )}
       </div>
 
-      {/* Dark Mode Banner – fixed bottom */}
       <DarkModeBanner isDark={isDark} isFixed={isFixed} />
     </div>
   );

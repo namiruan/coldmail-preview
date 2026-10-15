@@ -1,0 +1,471 @@
+/*
+ * 김반장 3.0 — 쓰는 컴포넌트 CSS (스펙 문서에서 추출)
+ * ─────────────────────────────────────────────
+ * 자동 생성 — 직접 고치지 마세요.
+ * 원본: namiruan/kbz_3.0_ui_stytem
+ * 받은 곳: namiruan/kbz_3.0_ui_stytem@main
+ * 다시 받기: node scripts/sync-kbz.mjs
+ */
+
+/* ══ design-system/components/atoms/button.md ══ */
+/* ── Base ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-gap-xs);
+  border: var(--stroke-sm) var(--stroke-solid) transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform var(--duration-fast) var(--easing-base);
+}
+.btn:hover { transform: translateY(var(--translate-interactive-hover)); }
+
+/* ── Size ── */
+/* sm · md · lg 타이포그래피는 HTML text-button-{size} 클래스로 처리한다. xs · micro는 대응 유틸 클래스 없음 */
+/* micro: height-micro(18px) — icon-only 전용. 밀도 최고 인라인 액션 */
+.btn--micro { height: var(--height-micro);   font-size: var(--font-size-sm); line-height: var(--line-height-ui); }
+/* xs: height-tight(24px) — 데이터 테이블 셀 액션 전용 */
+.btn--xs  { height: var(--height-tight);   padding: var(--space-inset-squish-xs); font-size: var(--font-size-sm);  line-height: var(--line-height-ui); letter-spacing: var(--letter-spacing-default); font-weight: var(--font-weight-body); }
+.btn--sm  { height: var(--height-compact);  padding: var(--space-inset-squish-sm); }
+.btn--md  { height: var(--height-base);     padding: var(--space-inset-squish-md); }
+.btn--lg  { height: var(--height-spacious); padding: var(--space-inset-squish-lg); }
+
+/* ── Style: fill (default) ── */
+.btn--primary   { background: var(--color-fill-brand);   color: var(--color-text-inverse); border-color: var(--color-fill-brand); }
+.btn--secondary { background: var(--color-fill-neutral); color: var(--color-text-inverse); border-color: var(--color-fill-neutral); }
+.btn--danger    { background: var(--color-fill-error);   color: var(--color-text-inverse); border-color: var(--color-fill-error); }
+.btn--ghost         { background: var(--color-surface-base); color: var(--color-text-body);    border-color: transparent; }
+.btn--ghost-inverse { background: transparent;             color: var(--color-text-inverse); border-color: transparent; }
+
+/* ── Style: solid ── */
+.btn--primary.btn--solid   { background: var(--color-surface-base); color: var(--color-fill-brand);   border-color: var(--color-fill-brand); }
+.btn--secondary.btn--solid { background: var(--color-surface-base); color: var(--color-fill-neutral); border-color: var(--color-fill-neutral); }
+.btn--danger.btn--solid    { background: var(--color-surface-base); color: var(--color-fill-error);   border-color: var(--color-fill-error); }
+
+/* ── Hover ── */
+.btn--primary:hover   { box-shadow: 0 0 0 var(--stroke-lg) var(--color-action-brand-hover); }
+.btn--secondary:hover { box-shadow: 0 0 0 var(--stroke-lg) var(--color-action-neutral-hover); }
+.btn--danger:hover    { box-shadow: 0 0 0 var(--stroke-lg) var(--color-action-error-hover); }
+.btn--ghost:hover         { box-shadow: 0 0 0 var(--stroke-lg) var(--color-action-neutral-hover); }
+.btn--ghost-inverse:hover { background: var(--color-action-light-hover); }
+
+/* ── State ── */
+/* 포커스 링은 전역 *:focus-visible 규칙으로 처리된다 */
+.btn--disabled { pointer-events: none; color: var(--color-text-disabled); background: var(--color-surface-disabled); border-color: var(--color-border-disabled); }
+
+/* 조건 미충족 비활성: 조건 충족 시 활성으로 전환되는 일시적 상태
+   btn--disabled(pointer-events:none, disabled 속성)와 달리 hover·focus 유지 — Tooltip 조건 안내 가능 */
+.btn--inactive {
+  color: var(--color-text-disabled);
+  background: var(--color-surface-disabled);
+  border-color: var(--color-border-disabled);
+  cursor: not-allowed;
+}
+/* btn:hover transform·btn--[style]:hover box-shadow override — 비활성 상태에서 hover 피드백 제거 */
+.btn.btn--inactive:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Icon (utilities/icon.css → .icon--{size} · components/atoms/icon.md) ── */
+.btn--icon-only { padding: 0; }
+.btn--icon-only.btn--micro { width: var(--height-micro); }
+.btn--icon-only.btn--xs   { width: var(--height-tight); }
+.btn--icon-only.btn--sm   { width: var(--height-compact); }
+.btn--icon-only.btn--md   { width: var(--height-base); }
+.btn--icon-only.btn--lg   { width: var(--height-spacious); }
+
+/* icon-left/right: 아이콘 span은 항상 DOM 첫 번째에 둔다.
+   icon-right만 row-reverse로 시각 순서를 역전시킨다. icon-left는 기본 row라 선언 불필요. */
+.btn--icon-right { flex-direction: row-reverse; }
+
+/* ── Button Group (2개 이상 배치 시 간격 규칙) ── */
+.btn-group { display: flex; align-items: center; gap: var(--space-gap-xs); }
+
+/* ── Loading ── */
+/* 클릭 후 처리 대기. variant 색상·레이블 유지, 상호작용만 차단.
+   내부에 span.spinner 삽입 — fill 버튼은 spinner--inverse, ghost·solid는 기본 스피너. */
+.btn--loading { pointer-events: none; opacity: 0.75; cursor: default; }
+/* hover override — loading 중 translateY·box-shadow 피드백 제거 */
+.btn.btn--loading:hover { transform: none; box-shadow: none; }
+
+/* ══ design-system/components/atoms/badge.md ══ */
+/* ── Base ── */
+/* height 고정 없음 — padding + line-height로 자연 결정 */
+/* shape 기본값 rect(radius-xs). size 기본값 sm — 클래스 없음. md는 badge--md로 명시 */
+/* line-height: 1.5(--line-height-reading) 의도적 선택 — rect와 pill 세로 높이를 통일하기 위함.
+   pill의 padding-block: inset-xs(2px)가 rect의 squish-xs 수직값과 동일해야 높이가 맞음 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-gap-2xs);
+  padding: var(--space-inset-squish-2xs);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-heading);
+  line-height: var(--line-height-reading);
+  white-space: nowrap;
+}
+
+/* ── Size: md ── */
+.badge--md { font-size: var(--font-size-sm); }
+
+/* ── Style: tint (기본) ── */
+.badge--neutral { background: var(--color-surface-neutral);        color: var(--color-text-label); }
+.badge--brand   { background: var(--color-surface-brand-subtle);   color: var(--color-text-brand); }
+.badge--info    { background: var(--color-surface-info-subtle);    color: var(--color-text-info); }
+.badge--success { background: var(--color-surface-success-subtle); color: var(--color-text-success); }
+.badge--caution { background: var(--color-surface-caution-subtle); color: var(--color-text-caution); }
+.badge--error   { background: var(--color-surface-error-subtle);   color: var(--color-text-error); }
+
+/* ── Type: fill ── */
+/* 버튼 색과 분리 — 각 스타일의 text 토큰(상태 색)을 fill 배경으로 사용 */
+.badge--fill.badge--neutral { background: var(--color-text-label);   color: var(--color-text-inverse); }
+.badge--fill.badge--brand   { background: var(--color-text-brand);   color: var(--color-text-inverse); }
+.badge--fill.badge--info    { background: var(--color-text-info);    color: var(--color-text-inverse); }
+.badge--fill.badge--success { background: var(--color-text-success); color: var(--color-text-inverse); }
+.badge--fill.badge--caution { background: var(--color-text-caution); color: var(--color-text-inverse); }
+.badge--fill.badge--error   { background: var(--color-text-error);   color: var(--color-text-inverse); }
+
+/* ── Shape: pill ── */
+/* 수직 inset-xs(2px)로 rect와 높이 통일. 가로 inset-lg(8px)로 여유 확보.
+   height = 1.5em + inset-xs×2. min-width = height → 한 자리 숫자 정방형 보장
+   두 자리 이상은 콘텐츠 너비가 height를 초과하므로 자연스럽게 타원형 */
+.badge--pill {
+  border-radius: var(--radius-pill);
+  padding-block: var(--space-inset-xs);
+  padding-inline: var(--space-inset-lg);
+  min-width: calc(1.5em + var(--space-inset-xs) * 2);
+  justify-content: center;
+}
+
+/* ── Line ── */
+/* 배경 흰색 override. 라인색은 스타일별 border 토큰 적용 */
+.badge--line { background: var(--color-surface-base); }
+.badge--line.badge--neutral { box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-neutral-subtle); }
+.badge--line.badge--brand   { box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-brand-subtle); }
+.badge--line.badge--info    { box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-info-subtle); }
+.badge--line.badge--success { box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-success-subtle); }
+.badge--line.badge--caution { box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-caution-subtle); }
+.badge--line.badge--error   { box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-error-subtle); }
+
+/* ── State: disabled — 비활성·비적용 상태 시각 표현 ── */
+/* 비인터랙티브 컴포넌트이므로 상호작용 차단이 아니라 시각적 de-emphasis 전용.
+   (예: 비활성 Tab 안의 카운트 badge, 적용되지 않는 항목 표시)
+   뱃지 중 가장 낮은 시각 우선순위 — 배경을 surface-subtle(gray-50)로 낮춰 뒤로 보낸다.
+   (같은 회색인 neutral(surface-neutral, gray-100)보다 한 단계 더 가라앉아, 조치가 필요한
+   neutral 정보가 상대적으로 도드라진다.) 다른 tint 뱃지와 동일하게 테두리 없이 면색으로만 구분.
+   fill은 solid 면이라 배경을 흐리게 할 수 없어(흰 텍스트가 안 보임), 대신 텍스트를
+   inverse-alpha(흰색 65%)로 낮춰 crisp함을 줄이고 disabled 계층을 표현한다.
+   style 색을 disabled 색으로 덮어써야 하므로 fill·line 조합과 같은/높은 명시도로 style 규칙 뒤에 둔다. */
+.badge--disabled { background: var(--color-surface-subtle); color: var(--color-text-disabled); }
+.badge--fill.badge--disabled { background: var(--color-text-disabled); color: var(--color-text-inverse-alpha); }
+.badge--line.badge--disabled { background: var(--color-surface-base); box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-disabled); }
+
+/* ── Animation: pulse ── */
+/* fill 강조 뱃지 전용 — 밝기를 높였다가 줄이는 방식으로 시선 유도 */
+@keyframes badge-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%       { filter: brightness(1.3); }
+}
+.badge--pulse { animation: badge-pulse var(--duration-pulse) var(--easing-symmetric) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .badge--pulse { animation: none; }
+}
+
+/* ══ design-system/components/atoms/segment.md ══ */
+/* ── Base ── */
+/* 컨테이너 — Toggle track과 동일한 시각 언어: brand-subtle 배경 + inset border */
+/* position:relative — slider(absolute) 기준점 */
+.segment {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  height: var(--height-compact); /* btn--sm(32px)과 동일 — sm 컨텍스트에서 높이 정렬 */
+  padding: var(--space-inset-xs);
+  gap: var(--space-gap-2xs);
+  background: var(--color-action-brand-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-brand-subtle);
+  transition: box-shadow var(--duration-base) var(--easing-base);
+}
+
+/* ── Slider ── */
+/* 선택 위치를 따라 이동하는 배경 레이어. JS가 width·translateX를 갱신 */
+/* top/bottom = 부모 padding(space-inset-xs)과 동일값 — padding 영역 안에 수직 맞춤 */
+/* left:0은 JS translateX의 기준점 — 실제 X위치는 선택 아이템의 offsetLeft로 결정 */
+.segment__slider {
+  position: absolute;
+  top: var(--space-inset-xs);
+  bottom: var(--space-inset-xs);
+  left: 0;
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-base);
+  box-shadow: var(--shadow-sm),
+              inset 0 0 0 var(--stroke-sm) var(--color-border-brand-subtle);
+  pointer-events: none;
+  transition: transform var(--duration-base) var(--easing-symmetric),
+              width var(--duration-base) var(--easing-symmetric);
+}
+
+/* ── Item ── */
+/* position:relative + z-index:1 — slider 위에 텍스트 렌더 */
+.segment__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: var(--space-inset-squish-sm);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-brand-alpha);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--duration-base) var(--easing-base);
+}
+
+/* ── Selected ── */
+/* 배경·그림자는 slider가 담당. 아이템은 색상만 변경 */
+.segment__item--selected {
+  color: var(--color-text-brand);
+  font-weight: var(--font-weight-heading);
+  cursor: default;
+}
+
+/* ── Hover ── */
+/* 컨테이너 hover 미정의 — 아이템 단위 hover로 충분하고, 컨테이너 전체는 클릭 대상이 아님 */
+.segment__item:not(.segment__item--selected):hover {
+  color: var(--color-text-brand);
+}
+
+/* ── Focus ── */
+/* 포커스 링은 전역 *:focus-visible 규칙으로 처리된다 */
+
+/* ── Size: md ── */
+/* btn--md(36px)와 높이 정렬 — height를 wrapper에서 제어하고 item은 수평 padding만 담당 */
+.segment--md { height: var(--height-base); }
+.segment--md .segment__item {
+  padding: var(--space-inset-squish-md);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Size: lg ── */
+/* btn--lg(40px)와 높이 정렬 */
+.segment--lg { height: var(--height-spacious); }
+.segment--lg .segment__item {
+  padding: var(--space-inset-squish-lg);
+  font-size: var(--font-size-base);
+}
+
+/* ── Full width ── */
+/* 아이템이 컨테이너 너비를 균등 분할 — slider JS는 offsetWidth를 그대로 읽으므로 추가 수정 불필요 */
+.segment--full {
+  display: flex;
+  width: 100%;
+}
+.segment--full .segment__item {
+  flex: 1;
+}
+
+/* ── Disabled ── */
+.segment--disabled {
+  pointer-events: none;
+  box-shadow: inset 0 0 0 var(--stroke-sm) var(--color-border-disabled);
+  background: var(--color-surface-disabled);
+}
+.segment--disabled .segment__item {
+  color: var(--color-text-disabled);
+}
+.segment--disabled .segment__slider {
+  background: var(--color-surface-base);
+  box-shadow: none;
+}
+
+/* ══ design-system/components/atoms/action-group.md ══ */
+/* ── Container ── */
+.action-group {
+  display: inline-flex;
+  border: var(--stroke-sm) var(--stroke-solid) var(--color-border-brand);
+  border-radius: var(--radius-xs);
+  /* overflow: hidden 사용 금지 — focus outline이 잘린다.
+     대신 첫·마지막 버튼에 border-radius를 직접 적용해 모서리를 처리한다. */
+}
+/* 활성 버튼이 하나도 없으면(단일 disabled 포함) 컨테이너 테두리도 disabled 색으로 자동 전환 */
+.action-group:not(:has(.action-btn:not(.action-btn--disabled))) {
+  border-color: var(--color-border-disabled);
+}
+
+/* ── Corner radius (overflow: hidden 대신) ── */
+/* 내부 radius = 컨테이너 radius - 테두리 두께(1px) */
+.action-group > .action-btn:first-child { border-radius: calc(var(--radius-xs) - var(--stroke-sm)) 0 0 calc(var(--radius-xs) - var(--stroke-sm)); }
+.action-group > .action-btn:last-child  { border-radius: 0 calc(var(--radius-xs) - var(--stroke-sm)) calc(var(--radius-xs) - var(--stroke-sm)) 0; }
+.action-group > .action-btn:only-child  { border-radius: calc(var(--radius-xs) - var(--stroke-sm)); }
+
+/* ── Item Base ── */
+.action-btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-gap-xs);
+  background: var(--color-surface-base);
+  color: var(--color-text-brand);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--duration-fast) var(--easing-base);
+}
+/* 구분선을 ::before 가상 요소로 분리 — 버튼 상태(disabled 등)가 구분선 색에 영향을 주지 않는다 */
+.action-btn + .action-btn::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: var(--stroke-sm);
+  background: var(--color-border-brand);
+}
+.action-btn:hover { background: var(--color-action-brand-hover); }
+
+/* ── Size ── */
+/* xs: height-tight(24px) — dense 데이터 테이블 행(28px)에 상하 2px 패딩으로 딱 맞음 */
+.action-btn--xs { height: var(--height-tight);    padding: var(--space-inset-squish-xs); }
+.action-btn--sm { height: var(--height-compact);  padding: var(--space-inset-squish-sm); }
+.action-btn--md { height: var(--height-base);     padding: var(--space-inset-squish-md); }
+
+/* ── State ── */
+/* 포커스 링은 전역 *:focus-visible 규칙으로 처리된다 */
+.action-btn--disabled { pointer-events: none; color: var(--color-text-disabled); background: var(--color-surface-disabled); }
+
+/* ── Typography (tokens/typography.css → .text-button-{size}) ── */
+/* size와 짝을 맞춘다. action-btn--sm → text-button-sm, action-btn--md → text-button-md */
+
+/* ── Icon (utilities/icon.css → .icon--{size}) ── */
+.action-btn--icon-only { padding: 0; }
+.action-btn--icon-only.action-btn--xs { width: var(--height-tight); }
+.action-btn--icon-only.action-btn--sm { width: var(--height-compact); }
+.action-btn--icon-only.action-btn--md { width: var(--height-base); }
+
+/* icon-left/right: 아이콘 span은 항상 DOM 첫 번째에 둔다.
+   icon-right만 row-reverse로 시각 순서를 역전시킨다. icon-left는 기본 row라 선언 불필요. */
+.action-btn--icon-right { flex-direction: row-reverse; }
+
+/* ── Labeled wrapper ── */
+/* 라벨과 .action-group을 가로로 묶는 컨테이너. 라벨은 bordered box 밖에 위치한다. */
+.action-group-labeled {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-gap-xs);
+}
+/* 텍스트 스타일은 .text-form-label 유틸리티에서 가져온다. (tokens/typography.css → .text-form-label) */
+.action-group-label { white-space: nowrap; color: var(--color-text-brand-muted); }
+
+/* ══ design-system/components/molecules/banner.md ══ */
+/* ── Banner ──────────────────────────────────
+   시각 스타일은 Toast와 동일 체계(상태별 surface-*-subtle 배경 + border-*-subtle + text-* 색).
+   Toast와 달리 인라인 블록 — position/stack/shadow/애니메이션·닫기 버튼 없음.
+─────────────────────────────────────────────── */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-gap-sm);
+  padding: var(--space-inset-lg);
+  background: var(--color-surface-brand-subtle); /* info default */
+  border: var(--stroke-sm) solid var(--color-border-brand-subtle); /* info default */
+  border-radius: var(--radius-md);
+}
+/* title·action 등 여러 요소가 쌓이면 더 넉넉한 padding으로 숨 쉴 공간 확보.
+   단일 message 배너는 base padding(inset-lg) 유지 — 컴팩트하게. */
+.banner:has(.banner__title),
+.banner:has(.banner__action) {
+  padding: var(--space-inset-xl);
+}
+
+/* ── Icon ── */
+/* icon--md(utilities/icon.css) — SVG 20px. color 상속으로 SVG currentColor 전달 */
+.banner__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-brand); /* info default */
+}
+/* title이 있을 때: 아이콘 박스 높이를 title 라인(font-size-lg × line-height-ui)에 맞춰
+   title의 세로 중앙에 정렬한다. 아이콘(20px)이 title 라인(15px)보다 커서 위아래로 살짝 넘치되
+   중심은 title 중심과 일치. title 없는 단일 message는 base(flex-start) 유지. */
+.banner:has(.banner__title) .banner__icon {
+  height: calc(var(--font-size-lg) * var(--line-height-ui));
+}
+
+/* ── Body ── */
+/* .text-description(font-size-lg + line-height-reading) 베이스. title은 이 크기를 유지하고,
+   message(본문 내용)는 한 단계 작은 label-small로 낮춰 title과 내용의 위계를 만든다. */
+.banner__body {
+  flex: 1;
+  min-width: 0; /* flex 컨테이너 안 텍스트 말줄임 보장 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-gap-xs); /* title·message·action 스택 시 세로 간격 — 단일 message는 자식 1개라 영향 없음 */
+}
+.banner__title {
+  font-size: var(--font-size-lg);   /* title은 body 베이스 크기 유지 */
+  font-weight: var(--font-weight-heading);
+  color: var(--color-text-brand); /* info default */
+  line-height: var(--line-height-ui);
+  margin: 0;
+}
+.banner__message {
+  font-size: var(--font-size-sm);   /* 내용은 sm(13px) — title(lg)보다 한 단계 작게 */
+  color: var(--color-text-brand); /* info default */
+  line-height: var(--line-height-reading);
+  margin: 0;
+}
+
+/* ── Action ── */
+/* .link(components/atoms/link.md) 위에 color만 오버라이드. font-size는 banner__body에서 상속 */
+.banner__action {
+  margin-top: var(--space-gap-xs);
+}
+.banner__action-link {
+  color: var(--color-text-brand); /* info default — .link 기본값(brand-vivid) 오버라이드 */
+}
+.banner__action-link:focus-visible {
+  outline: var(--stroke-md) solid var(--color-border-focus);
+  outline-offset: var(--space-offset-focus);
+  border-radius: var(--radius-xs);
+}
+
+/* ── Style variants ── */
+.banner--success {
+  background: var(--color-surface-success-subtle);
+  border-color: var(--color-border-success-subtle);
+}
+.banner--success .banner__icon,
+.banner--success .banner__title,
+.banner--success .banner__message,
+.banner--success .banner__action-link {
+  color: var(--color-text-success);
+}
+
+.banner--caution {
+  background: var(--color-surface-caution-subtle);
+  border-color: var(--color-border-caution-subtle);
+}
+.banner--caution .banner__icon,
+.banner--caution .banner__title,
+.banner--caution .banner__message,
+.banner--caution .banner__action-link {
+  color: var(--color-text-caution);
+}
+
+.banner--error {
+  background: var(--color-surface-error-subtle);
+  border-color: var(--color-border-error-subtle);
+}
+.banner--error .banner__icon,
+.banner--error .banner__title,
+.banner--error .banner__message,
+.banner--error .banner__action-link {
+  color: var(--color-text-error);
+}
