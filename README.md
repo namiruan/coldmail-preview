@@ -57,10 +57,14 @@ src/
     App.tsx                    RouterProvider + Toaster
     routes.tsx                 라우트 정의
     components/
-      EmailPreview.tsx         메일 클라이언트 셸 + 렌더링
+      EmailPreview.tsx         시안 목록 + 메일 클라이언트 셸 + 렌더링
+      EditorPanel.tsx          오른쪽 코드 에디터 (CodeMirror · HTML 린터)
       ui/                      shadcn/ui 컴포넌트
     data/
-      defaultTemplates.ts      기본 템플릿 (여기에 시안을 추가)
+      defaultTemplates.ts      templates/README.md 를 읽어 시안 목록을 만든다
+      parseTemplatesDoc.js     그 문서의 표를 읽는 파서 (검증 스크립트와 공용)
+      utm.ts                   내보낼 때 링크의 utm_* 를 맞춘다
+      repo.ts                  GitHub 링크 (읽기 · 편집)
   styles/                      Tailwind v4 + 테마 토큰
 ```
 
